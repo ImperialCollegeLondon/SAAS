@@ -1,6 +1,9 @@
 """
 Function to take the vacuum wavenumber and return the air wavelength in nm
 provided that the wavenumber is between 5000 cm-1 and 50000 microns.
+
+The function uses equation 3 of Peck and Reeder (1972), JOSA 62, 958
+
 Taking the wavenumber as the transition point resolves the ambiguity
 around 200 nm. e.g.:
 
