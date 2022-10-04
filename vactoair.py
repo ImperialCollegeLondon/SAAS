@@ -38,7 +38,7 @@ within the United States.
 
 """
 
-def vactoair(wn):i
+def vactoair(wn):
     if 5000 < wn < 50000:
         awnp= 1e7/(wn*(1+ 8060.51e-8 + 2480990/(132.274e8-wn*wn) + 17455.7/(39.32957e8-wn*wn)))
     else:
