@@ -10,4 +10,6 @@ def calc_stat_unc(fwhm, res, snr):
     snr: signal to noise ratio of the spectral line
     """ 
     
+    fwhm = fwhm / 1000  # convert from mK (Xgremlin standard output) to cm-1
+
     return np.sqrt(fwhm * res) / snr  # Same as: FWHM / (np.sqrt(Number of independant points across FWHM) * SNR)
