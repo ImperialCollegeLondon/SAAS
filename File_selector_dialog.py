@@ -11,7 +11,7 @@ class UI(QMainWindow):
 
         self.actionOpen_File.triggered.connect(self.getfilename)
         self.actionCreate_HDF5_file.triggered.connect(self.create_hdf5)
-        self.actionAdd_to_HDF5_file.triggered.connect(self.add_to_hdf5)
+        self.actionAdd_to_HDF5_file.triggered.connect(self.add_linelist_to_hdf5)
         self.actionPlot.triggered.connect(self.plot)
         self.actionExit.triggered.connect(self.exit)
 
@@ -48,8 +48,9 @@ class UI(QMainWindow):
         print("Plot button clicked")
         plot_spectrum(self.spec,self.hdr)
 
-    def add_to_hdf5(self):
-        print("AddToHdf5 button clicked")
+    def add_linelist_to_hdf5(self):
+        self.linfile = QFileDialog.getOpenFileName(self, "Open File", "", "linelists (*corr);;All Files (*)")
+        add_intcorr(self.fname[0][0:-4],self.linfile[0])
 
     def exit(self):
         sys.exit()
