@@ -5,6 +5,7 @@ import h5py
 import numpy as np
 import sys
 from os.path import exists
+from os.path import *
 from struct import unpack
 import matplotlib.pyplot as plt
 
@@ -13,6 +14,7 @@ class LineSpec(IsDescription):
     xint = Float32Col()
     width = Float32Col()
     dmping = Float32Col()
+    ew = Float32Col()
     itn = Int16Col()
     ihold = Int16Col()
     tags = StringCol(4)
@@ -65,8 +67,30 @@ def read_linelist(specfile,sp):
         sp.append()
 
     print(i+1,"lines converted")
+    flin.close()
 
     return(sp)
+
+def read_intcorr(linfile,lst):
+    fintc = open(linfile,"r")
+    i=0
+
+    for line in fintc:
+        line=line.split()
+        if line[0].isdigit():     #Means this is a line and not header information
+            lst['sig'],lst['xint'],lst['width'],lst['dmping']=(line[1],line[2],line[3],line[4])
+            lst['ew'],lst['itn'],lst['ihold'],lst['tags'] = (line[5],line[6],line[7],line[8])
+            lst.append()
+            i=i+1
+
+#
+# Need some error checking here as well.
+# Including parsing the header Lines
+#
+
+    print(i,"lines read in")
+    fintc.close()
+    return(lst)
 
 def read_header(hdrfile):
     #
@@ -108,6 +132,7 @@ def write_hdf5(specfile,spec,header):
     # Create the hdf5 file, create spectrum group and write the data to a dataset in the spectrum group
     #
 
+#    h5.get_config().track_order=True
     hdf_file = open_file(specfile + '.hdf5','w', title="FT Spectrum")
     spectrum_group = hdf_file.create_group("/","spectrum")
     dataset = hdf_file.create_array(spectrum_group,"spectrum",spec,"original spectrum")
@@ -122,6 +147,7 @@ def write_hdf5(specfile,spec,header):
     # Write the linelist to the hdf5 file if there is one
     #
     if exists(specfile + '.lin'):
+        # Add an if block to cope with what to do if group exists.
         linelist_group = hdf_file.create_group("/","linelists")
         linel = hdf_file.create_table(linelist_group, "linelist1", LineSpec,"Original linelist")
         sp = linel.row             # Write the linelists to the tables
@@ -133,9 +159,31 @@ def write_hdf5(specfile,spec,header):
         print("No linelist found")
 
     hdf_file.close()
+    return(hdf_file)
+
+def add_intcorr(specfile,linfile):
+    tab_name= split(linfile)[1]
+
+    #
+    # Is there a better way of doing this than closing the hdf5 file in write_hdf5
+    # and re-opening it here?
+    # Is there a more flexible way of selecting the hdf5 file, rather than
+    # just assuming it's the same as the one written?
+    #
+
+    hdf_file = open_file(specfile + '.hdf5','r+', title="FT Spectrum")
+    # Needs an if block to make it more robust - what if group exists?
+    intcorr_group = hdf_file.create_group("/","intensity calibrated linelists")
+    intcorr_table = hdf_file.create_table(intcorr_group, tab_name, LineSpec,linfile)
+    lst=intcorr_table.row
+    read_intcorr(linfile,lst)
+    intcorr_table.flush()
+
     return()
 
+
 def plot_spectrum(spec,header):
+    # How do I get it to plot the spectrum in the correct window?
     fig,ax = plt.subplots()
     wstart = float(header["wstart"])
     wstop = float(header["wstop"])
@@ -145,40 +193,3 @@ def plot_spectrum(spec,header):
     ax.scatter(wnum,spec)
     ax.set(xlabel="Wavenumber (cm-1)",ylabel="Relative intensity")
     plt.show()
-
-
-
-
-#
-# Main program
-#
-
-#     if len(sys.argv) != 2:
-#         print("Usage: 'python nos6_to_hdf5.py <filename>', with no extension to the filename")
-#         sys.exit()
-#     else:
-#         specfile = sys.argv[1]
-#         #
-#         # Strip off any extension that describes the file
-#         #
-#
-#     header = {}
-#     linel=[]
-#
-#     #
-#     # Open the header and use it to create the metadata
-#     #
-#     if exists(specfile + ".hdr"):
-#         hdr = read_header(specfile + ".hdr")
-#     else:
-#         print("No header file found, hdf5 file not created")
-#         exit()
-#     #
-#     # Open the spectrum file and read in the spectrum.
-#     #
-#     if exists(specfile + ".dat"):
-#         spec = read_data(specfile + ".dat")
-#     else:
-#         print("No data file found. ")
-#         exit()
-#
