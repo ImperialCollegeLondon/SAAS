@@ -84,18 +84,23 @@ class target_level:
             for i in self.expt_data:
                 if float(j.i.xint)> maxI :        # Find the wavenumber of the strongest line
                     maxI = i.xint                 # Used for calibration uncertainty
-                    self.w_maxI = line.sig
+                    self.w_maxI = i.sig           # Check indexing of this - not sure it will work.
         return()
 
 
-      """
-      Code from Christian 
-      """  
 
 class EnergyLevel():
+    """
+    This applies to the current file Cr_BF2.h5, where the level parameters are stored in order
+    but with no particular key. It would probably be better to store it with keys.
+    """
     def __init__(self,lev_list,*args,**kwargs):
         self.desig = lev_list[0]
-        self.J = lev+list[1]
+        self.J = lev_list[1]
+        self.energy = lev_list[2]
+        self.parity = lev_list[3] 
+        self.lifetime = lev_list[4]
+        self.key = lev_list[5]
 
-levs = [EnergyLevel(level) for level in levels]
-print(lev)
+# levs = [EnergyLevel(level) for level in levels]
+# print(lev)
