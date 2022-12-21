@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from tables import *
+# These imports should be cut down to what is needed.
 import h5py
 import numpy as np
 import sys
@@ -8,7 +8,6 @@ from os.path import exists
 from os.path import *
 from struct import unpack
 import matplotlib.pyplot as plt
-
 
 class spectrum():
 
@@ -33,30 +32,28 @@ class spectrum():
         return()
 
 
-class LineSpec(IsDescription):
-    sig = Float64Col()
-    xint = Float32Col()
-    width = Float32Col()
-    dmping = Float32Col()
-    ew = Float32Col()
-    itn = Int16Col()
-    ihold = Int16Col()
-    tags = StringCol(4)
-    epstot = Float32Col()
-    epsevn = Float32Col()
-    epsodd = Float32Col()
-    epsran = Float32Col()
-    spare = Float32Col()
-    ident = StringCol(32)
+class LineSpec():
+    """ 
+    This describes one the line in the intensity corrected linelist.
+    In the example file Cr_BF2.h5, if the file is opened with h5py.File, the linelist
+    is read out as a list of dictionaries (I think).
+    """
+    def __init__(self,line,spectrum, *args, **kwargs):
+        self.sig = line['sig']
+        self.xint = line['xint']
+        self.width = line['width']
+        self.dmping = line['dmping']
+        self.ew = line['ew']
 
-    def __init__(self,row):
-        self.sig = row[0]                         # example to expand
-        self.xinit = row[0]                      
+        self.npts = 0.001*self.width/spectrum.hdr['resoln']    # no. points/FWHM.
+        """  
+        From eqn 3 of Ward et al. 2023 (Cr II BF paper) with alpha_y = 1.5.
+        This is the statistical uncertainty of the line. The total uncertainty
+        of the branching fraction must be calculated in the target_level class
+        as it requires us to know the distance of the line from the strongest decay.
+        """
+        self.inten_unc = 2.25/(self.xinit**2 * self.npts )     
 
-        self.npts=0.001*self.width/spectrum.hdr['resoln']    # no. points/FWHM.
-        self.inten_unc=2.25/(self.xinit**2 * self.npts )     # From eqn 3 of Ward et al. 2023 (Cr II BF paper) with alpha_y = 1.5
-
-    def _calc_inten_unc(self,spectrum):
         return()
 
 
