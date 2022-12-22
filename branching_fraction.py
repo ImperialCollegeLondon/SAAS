@@ -91,16 +91,15 @@ class target_level:
 
 class EnergyLevel():
     """
-    This applies to the current file Cr_BF2.h5, where the level parameters are stored in order
-    but with no particular key. It would probably be better to store it with keys.
+    Now modified to use a level list with keys in the hdf5 file
     """
     def __init__(self,lev_list,*args,**kwargs):
-        self.desig = lev_list[0]
-        self.J = lev_list[1]
-        self.energy = lev_list[2]
-        self.parity = lev_list[3] 
-        self.lifetime = lev_list[4]
-        self.key = lev_list[5]
+        self.desig = lev_list['desig']
+        self.J = lev_list['J']
+        self.energy = lev_list['energy']
+        self.parity = lev_list['parity'] 
+        self.lifetime = lev_list['lifetime']
+        self.key = lev_list['key']
 
 # levs = [EnergyLevel(level) for level in levels]
 # print(lev)
