@@ -37,6 +37,18 @@ class Spectrum():
     phase = float()
     badpt = float()
 
+class EnergyLevel(IsDescription):
+    """
+    This applies to the current file Cr_BF2.h5, where the level parameters are stored in order
+    but with no particular key. It would probably be better to store it with keys.
+    """
+    desig = StringCol(10)
+    J = Float32Col()
+    energy  = Float32Col()
+    parity = StringCol(1)
+    lifetime = StringCol(4)
+    key = StringCol(10)
+
 def read_linelist(specfile,sp):
     #
     #  Read in a linelist and return as a pytable
@@ -70,6 +82,19 @@ def read_linelist(specfile,sp):
     flin.close()
 
     return(sp)
+
+def read_levels(levfile,lst):
+    fintc = open(levfile,"r")
+    i=0
+
+    for line in fintc:
+        line=line.split()    
+        lst['desig'],lst['J'],lst['energy'],lst['parity']=(line[0],line[1],line[2],line[3])
+        lst['lifetime'],lst['key'] = (line[4],line[5])
+        lst.append()
+        i=i+1
+
+    return()
 
 def read_intcorr(linfile,lst):
     fintc = open(linfile,"r")
@@ -181,6 +206,16 @@ def add_intcorr(specfile,linfile):
 
     return()
 
+def add_levels(Lev_hdf5,levfile):
+    tab_name = levfile[0]
+    hdf_file = open_file(Lev_hdf5,'w',title="Levels")
+    lev_group = hdf_file.create_group("/","Levels")
+    lev_table = hdf_file.create_table(lev_group,"Cr II levels", EnergyLevel, tab_name)
+    lst =lev_table.row
+    read_levels(tab_name,lst)
+    lev_table.flush()
+
+    return()
 
 def plot_spectrum(spec,header):
     # How do I get it to plot the spectrum in the correct window?
