@@ -45,9 +45,11 @@ class EnergyLevel(IsDescription):
     desig = StringCol(10)
     J = Float32Col()
     energy  = Float32Col()
+    uncertainty = Float32Col()
     parity = StringCol(1)
     lifetime = StringCol(4)
     key = StringCol(10)
+    species = StringCol(10)
 
 def read_linelist(specfile,sp):
     #
@@ -89,8 +91,11 @@ def read_levels(levfile,lst):
 
     for line in fintc:
         line=line.split()    
-        lst['desig'],lst['J'],lst['energy'],lst['parity']=(line[0],line[1],line[2],line[3])
-        lst['lifetime'],lst['key'] = (line[4],line[5])
+        print(line[2],line[3])
+        lst['desig'],lst['J'],lst['energy'],lst['uncertainty']=(line[0],line[1],line[2],line[3])
+        lst['parity'],lst['lifetime'],lst['key'] = (line[4],line[5],line[6])
+        lst['species'] = "Cr II"
+        print(lst['energy'],lst['uncertainty'])
         lst.append()
         i=i+1
 
