@@ -100,6 +100,8 @@ class EnergyLevel():
         self.parity = lev_list['parity'] 
         self.lifetime = lev_list['lifetime']
         self.key = lev_list['key']
+        self.species = lev_list['species']
+        self.uncertainty = lev_list['uncertainty']
 
 # levs = [EnergyLevel(level) for level in levels]
 # print(lev)
