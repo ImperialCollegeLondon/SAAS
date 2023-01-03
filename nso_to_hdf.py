@@ -43,9 +43,9 @@ class EnergyLevel(IsDescription):
     but with no particular key. It would probably be better to store it with keys.
     """
     desig = StringCol(10)
-    J = Float32Col()
-    energy  = Float32Col()
-    uncertainty = Float32Col()
+    J = StringCol(3)
+    energy  = StringCol(11)
+    uncertainty = StringCol(6)
     parity = StringCol(1)
     lifetime = StringCol(4)
     key = StringCol(10)
