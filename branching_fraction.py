@@ -26,7 +26,7 @@ class spectrum():
             print("Intensity calibration uncertainty is zero - please change in the hdf5 file")
             return(-1)
         else:
-            print(f 'Calculating uncertainty of calibration between ' {self.hdr['bandlo']:> 6.0f} and {self.hdr['bandhi']:>6.0f})
+            print(f"Calculating uncertainty of calibration between  {self.hdr['bandlo']:> 6.0f}  and  {self.hdr['bandhi']:>6.0f}")
             self.calunc_per_1000=spectrum.hdr['intencalunc']/(self.hdr['bandhi']-self.hdr['bandlo'])
     
         return()
@@ -64,10 +64,10 @@ class target_level:
     parity  = str           # a string (? odd, even; or 0 and 1?)
     lifetime = float        # a number (float)
     key    = str            # a string
-    calculations            # ?? array? list of tuples? 
-    expt_data               # will contain snr and inten for each lower level and spectrum. How to arrange?
-    results                 # ???
-    w_maxI                  # Wavenumber of strongest line in branch in each spectrum. A dictionary of floats?
+    calculations =str           # ?? array? list of tuples? 
+    expt_data    =str           # will contain snr and inten for each lower level and spectrum. How to arrange?
+    results       =str           # ???
+    w_maxI       =str            # Wavenumber of strongest line in branch in each spectrum. A dictionary of floats?
 
     def __init__(self):
         return()
@@ -95,13 +95,11 @@ class EnergyLevel():
     """
     def __init__(self,lev_list,*args,**kwargs):
         self.desig = lev_list['desig']
-        self.J = lev_list['J']
-        self.energy = lev_list['energy']
+        self.J = float(lev_list['J'])
+        self.energy = float(lev_list['energy'])
         self.parity = lev_list['parity'] 
         self.lifetime = lev_list['lifetime']
         self.key = lev_list['key']
         self.species = lev_list['species']
-        self.uncertainty = lev_list['uncertainty']
+        self.uncertainty = float(lev_list['uncertainty'])
 
-# levs = [EnergyLevel(level) for level in levels]
-# print(lev)
