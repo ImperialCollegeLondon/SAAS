@@ -42,7 +42,7 @@ class LineSpec():
         self.sig = line['sig']
         self.xint = line['xint']
         self.width = line['width']
-        self.dmping = line['dmping']
+        self.dmping = line['dmping'] 
         self.ew = line['ew']
 
         self.npts = 0.001*self.width/spectrum.hdr['resoln']    # no. points/FWHM.
@@ -103,3 +103,12 @@ class EnergyLevel():
         self.species = lev_list['species']
         self.uncertainty = float(lev_list['uncertainty'])
 
+    def _lev_with_lifetime(self, *args, **kwargs):
+        """ 
+        Return all the levels with non-zero lifetimes
+        """
+
+        life_lev = [i for i in self if i.lifetime !=b'-']
+        return(life_lev)
+
+        
