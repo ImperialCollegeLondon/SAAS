@@ -23,18 +23,18 @@ class spectrum():
 
     def _calc_inten_unc_per_1000(self):              # Belongs in spectrum class
         if self.hdr['intencalunc'] == 0:
-            print("Intensity calibration uncertainty is zero - please change in the hdf5 file")
-            return(-1)
-        else:
-            print(f"Calculating uncertainty of calibration between  {self.hdr['bandlo']:> 6.0f}  and  {self.hdr['bandhi']:>6.0f}")
-            self.calunc_per_1000=spectrum.hdr['intencalunc']/(self.hdr['bandhi']-self.hdr['bandlo'])
+            print("Intensity calibration uncertainty is zero in header - using a default of 0.07 for calibration uncertainty")
+            self.hdr['intencalunc'] = 0.07
+        
+        print(f"Calculating uncertainty of calibration between  {self.hdr['bandlo']:> 6.0f}  and  {self.hdr['bandhi']:>6.0f}")
+        self.calunc_per_1000=spectrum.hdr['intencalunc']/(self.hdr['bandhi']-self.hdr['bandlo'])
     
         return()
 
 
 class LineSpec():
     """ 
-    This describes one the line in the intensity corrected linelist.
+    This describes one line in the intensity corrected linelist.
     In the example file Cr_BF2.h5, if the file is opened with h5py.File, the linelist
     is read out as a list of dictionaries (I think).
     """
