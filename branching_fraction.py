@@ -44,20 +44,28 @@ class LineSpec():
     def __init__(self,line,spectrum, *args, **kwargs):
         self.sig = line['sig']
         self.xint = line['xint']
-        self.width = line['width']
+        self.width = line['width']        # Should we convert this to cm-1 (i.e. divide by 1000?)
         self.dmping = line['dmping'] 
         self.ew = line['ew']
 
-        self.npts = 0.001*self.width/spectrum.hdr['resoln']    # no. points/FWHM.
+        self.npts = 0.001*self.width/float(spectrum.hdr['resolutn'] )   # no. points/FWHM.
+        """ 
+        Following line is equation 9 of Sikstrom (2002) with alpha_sigma = 0.8. Values
+        should be 0.69 for Gaussian, 0.8 for Lorentzian, so this is slightly pessimistic.
+        Note that Davis, Abrams & Brault assumed alpha_sigma = 1 in equation 9.3 
+        """
+        self.sig_statunc = 0.8 * 0.001*self.width/(np.sqrt(self.npts) * self.xint)   
+
+
         """  
         From eqn 3 of Ward et al. 2023 (Cr II BF paper) with alpha_y = 1.5.
         This is the statistical uncertainty of the line. The total uncertainty
         of the branching fraction must be calculated in the target_level class
         as it requires us to know the distance of the line from the strongest decay.
         """
-        self.inten_unc = 2.25/(self.xinit**2 * self.npts )     
+        self.inten_unc = 2.25/(self.xint**2 * self.npts )     
 
-        return()
+       
 
 class target_level:
     ident = str             # a string
