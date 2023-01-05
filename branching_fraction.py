@@ -9,7 +9,7 @@ from os.path import *
 from struct import unpack
 import matplotlib.pyplot as plt
 
-class spectrum():
+class Spectrum():
 
     def __init__(self, spec, *args, **kwargs): 
         """
@@ -19,18 +19,21 @@ class spectrum():
         self.spec = spec                                                                              
         self.hdr =  spec.attrs                 
         self._calc_inten_unc_per_1000()
-        return()
 
-    def _calc_inten_unc_per_1000(self):              # Belongs in spectrum class
-        if self.hdr['intencalunc'] == 0:
+
+    def _calc_inten_unc_per_1000(self):              # Belongs in Spectrum class
+        try: 
+            if self.hdr['intencalunc'] == 0 :
+                print("Intensity calibration uncertainty is zero in header - using a default of 0.07 for calibration uncertainty")
+                self.hdr['intencalunc'] = 0.07
+        except:
             print("Intensity calibration uncertainty is zero in header - using a default of 0.07 for calibration uncertainty")
             self.hdr['intencalunc'] = 0.07
         
-        print(f"Calculating uncertainty of calibration between  {self.hdr['bandlo']:> 6.0f}  and  {self.hdr['bandhi']:>6.0f}")
-        self.calunc_per_1000=spectrum.hdr['intencalunc']/(self.hdr['bandhi']-self.hdr['bandlo'])
+        print("Calculating uncertainty of calibration between ", self.hdr['bandlo'], " and ", self.hdr['bandhi'])
+        self.hdr['calunc_per_1000']=1000*self.hdr['intencalunc']/(float(self.hdr['bandhi'])-float(self.hdr['bandlo']))
     
         return()
-
 
 class LineSpec():
     """ 
@@ -55,7 +58,6 @@ class LineSpec():
         self.inten_unc = 2.25/(self.xinit**2 * self.npts )     
 
         return()
-
 
 class target_level:
     ident = str             # a string
@@ -86,8 +88,6 @@ class target_level:
                     maxI = i.xint                 # Used for calibration uncertainty
                     self.w_maxI = i.sig           # Check indexing of this - not sure it will work.
         return()
-
-
 
 class EnergyLevel():
     """
