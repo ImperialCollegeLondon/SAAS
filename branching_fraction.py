@@ -56,46 +56,14 @@ class LineSpec():
         """
         self.sig_statunc = 0.8 * 0.001*self.width/(np.sqrt(self.npts) * self.xint)   
 
-
         """  
         From eqn 3 of Ward et al. 2023 (Cr II BF paper) with alpha_y = 1.5.
         This is the statistical uncertainty of the line. The total uncertainty
         of the branching fraction must be calculated in the target_level class
         as it requires us to know the distance of the line from the strongest decay.
         """
-        self.inten_unc = 2.25/(self.xint**2 * self.npts )     
+        self.inten_unc = np.sqrt(2.25/(self.xint**2 * self.npts )   )  
 
-       
-
-class target_level:
-    ident = str             # a string
-    j_val = float           # a number (float)
-    level_value = float     # a number (float)
-    parity  = str           # a string (? odd, even; or 0 and 1?)
-    lifetime = float        # a number (float)
-    key    = str            # a string
-    calculations =str           # ?? array? list of tuples? 
-    expt_data    =str           # will contain snr and inten for each lower level and spectrum. How to arrange?
-    results       =str           # ???
-    w_maxI       =str            # Wavenumber of strongest line in branch in each spectrum. A dictionary of floats?
-
-    def __init__(self):
-        return()
-
-    def _strongest_line(self,line):       #
-        
-        """
-        Description:
-            Finds the wavenumber of the strongest line in the branch in this spectrum
-            Used in the calculation of the calibration uncertainty
-        """
-
-        for j in self.expt_data.spectrum:
-            for i in self.expt_data:
-                if float(j.i.xint)> maxI :        # Find the wavenumber of the strongest line
-                    maxI = i.xint                 # Used for calibration uncertainty
-                    self.w_maxI = i.sig           # Check indexing of this - not sure it will work.
-        return()
 
 class EnergyLevel():
     """
@@ -120,3 +88,39 @@ class EnergyLevel():
         return(life_lev)
 
         
+class target_level:
+    level = EnergyLevel  
+
+    calculations =str           # ?? array? list of tuples? 
+    expt_data    =str           # will contain snr and inten for each lower level and spectrum. How to arrange?
+    results       =str           # ???
+    w_maxI       =str            # Wavenumber of strongest line in branch in each spectrum. A dictionary of floats?
+
+    def __init__(self):
+        return()
+
+    def _strongest_line(self,line):       #
+        
+        """
+        Description:
+            Finds the wavenumber of the strongest line in the branch in this spectrum
+            Used in the calculation of the calibration uncertainty
+        """
+
+        for j in self.expt_data.spectrum:
+            for i in self.expt_data:
+                if float(j.i.xint)> maxI :        # Find the wavenumber of the strongest line
+                    maxI = i.xint                 # Used for calibration uncertainty
+                    self.w_maxI = i.sig           # Check indexing of this - not sure it will work.
+        return()
+       
+class calculations():
+
+    def __init__(self,calc_list, *args, **kwargs):
+        """ 
+        Contains calculated log(gf) values from e.g. Kurucz, Raassen & Uylings
+        """
+        
+
+
+def match_calcs(linelist, calcs):
