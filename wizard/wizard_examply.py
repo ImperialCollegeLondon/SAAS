@@ -57,8 +57,8 @@ class PageInfo(QtWidgets.QWizardPage):
         self.inst_label.setText("Enter your institution and supervisor if student")
 
     def _create_hdf5(self):
-        hdf_file = open_file(str(self.title.text()) + ".hdf5",'w', title="FT Spectrum")
-        spectrum_group = hdf_file.create_group("/","Spectra")
+        hdf_file = h5py.File(str(self.title.text()) + ".hdf5",'w')
+        spectrum_group = hdf_file.create_group("Spectra")
   
 
 
