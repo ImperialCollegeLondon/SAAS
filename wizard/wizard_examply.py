@@ -20,7 +20,7 @@ class MagicWizard(QtWidgets.QWizard):
         self.addPage(PageInfo(self))
         self.addPage(Page1(self))
         self.addPage(Page2(self))
-        self.setWindowTitle("SAAS - hdf5 file creation wizard")
+        self.setWindowTitle("SAAS - New Project Wizard")
         self.resize(640,480)
         
         self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.onFinish) 
@@ -44,7 +44,9 @@ class PageInfo(QtWidgets.QWizardPage):
         Basic information about the project and its creator
         """
         super(PageInfo, self).__init__(parent)
-        self.heading = QLabel()
+        self.setTitle('Project Information')
+        self.setSubTitle('This wizard will help you create a hdf5 file for your branching fraction project\n')
+        #self.heading = QLabel()
         self.title_label = QLabel()
         self.title = QLineEdit()
         self.user_label = QLabel()
@@ -55,7 +57,7 @@ class PageInfo(QtWidgets.QWizardPage):
         # self.CreateHDF.clicked.connect(self._create_hdf5)
 
         layout = QtWidgets.QFormLayout()
-        layout.addRow(self.heading)
+        #layout.addRow(self.heading)
         layout.addRow(self.title_label,self.title)
         layout.addRow(self.user_label,self.user)
         layout.addRow(self.inst_label,self.institute)
@@ -65,8 +67,8 @@ class PageInfo(QtWidgets.QWizardPage):
     
 
     def initializePage(self):
-        self.heading.setText("This wizard will help you create a hdf5 file for your branching fraction project")
-        self.title_label.setText("Enter a title for your project ")
+        #self.heading.setText("This wizard will help you create a hdf5 file for your branching fraction project")
+        self.title_label.setText("Enter a title for your project")
         self.user_label.setText("Enter your name ")
         self.inst_label.setText("Enter your institution and supervisor if student")
         
@@ -89,11 +91,14 @@ class PageInfo(QtWidgets.QWizardPage):
 class Page1(QtWidgets.QWizardPage):
     def __init__(self, parent=None):
         super(Page1, self).__init__(parent)
+        
+        self.setTitle('File Selection')
+        self.setSubTitle('Select files to add to the project. Files marked with * are required for project creation.')
 
-        self.SpectrumFile = QPushButton("Add Spectrum")
-        self.LinesFile = QPushButton("Add Linelist")
-        self.LevelsFile = QPushButton("Add Levels file")
-        self.CalcsFile = QPushButton("Add Calculations")
+        self.SpectrumFile = QPushButton("Add Spectrum*")
+        self.LinesFile = QPushButton("Add Linelist*")
+        self.LevelsFile = QPushButton("Add Levels file*")
+        self.CalcsFile = QPushButton("Add Calculations*")
         self.IDFile = QPushButton("Add Previous Identifications")
 
         self.SpectrumFile.clicked.connect(self._add_spectrum)
@@ -103,7 +108,7 @@ class Page1(QtWidgets.QWizardPage):
         self.IDFile.clicked.connect(self._add_prev_idents)
 
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(QLabel("Now add the files to the project"))
+        #layout.addWidget(QLabel("Now add the files to the project"))
         layout.addWidget(self.SpectrumFile)
         layout.addWidget(self.LinesFile)
         layout.addWidget(self.LevelsFile)
