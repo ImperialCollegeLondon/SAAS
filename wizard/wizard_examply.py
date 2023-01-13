@@ -25,10 +25,17 @@ class MagicWizard(QtWidgets.QWizard):
         
         self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.onFinish) 
         
-        self.test = ''  # just a dummy variable, but we can have others here with .hdr file names, project titles, etc. etc.
+        # Filename variables #
+        self.spectrum_hdr = ''
+        self.spectrum_dat = ''
+        self.linelist_file = ''
+        self.level_file = ''
+        self.calc_file = ''
+        self.prev_idents_file = ''
+          
            
     def onFinish(self):  # this could be where we do all of the hdf5 creation etc. That would be best as the file won't be created if the user presses the cancel button.
-        print(self.test)
+        print(self.spectrum_hdr, self.spectrum_dat, self.linelist_file, self.level_file, self.prev_idents_file)
 
 
 class PageInfo(QtWidgets.QWizardPage):
@@ -90,6 +97,10 @@ class Page1(QtWidgets.QWizardPage):
         self.IDFile = QPushButton("Add Previous Identifications")
 
         self.SpectrumFile.clicked.connect(self._add_spectrum)
+        self.LevelsFile.clicked.connect(self._add_linelist)
+        self.LevelsFile.clicked.connect(self._add_levels)
+        self.CalcsFile.clicked.connect(self._add_calcs)
+        self.IDFile.clicked.connect(self._add_prev_idents)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(QLabel("Now add the files to the project"))
@@ -100,16 +111,11 @@ class Page1(QtWidgets.QWizardPage):
         layout.addWidget(self.IDFile)        
         self.setLayout(layout)
         
-        
-        
-        
+        self.tick_icon = QtGui.QIcon('tick-button.png')        
       
-    def _add_spectrum(self):
-        self.wizard().test = 'It Worked!'  # this is how we pass variables back to the main Wizard class
-        
-        
-        
-        fname = QFileDialog.getOpenFileName(self, "Open File", "", "Header Files (*.hdr);;All Files (*)")
+    def _add_spectrum(self): # should we make this simply look for a folder and then pull all of the .hdrs and .dats in that folder? 
+               
+        fname = QFileDialog.getOpenFileName(self, "Select Spectrum Header File", "", "Header Files (*.hdr);;All Files (*)")
         if fname:
 #            print(spectrum[0])
             if fname[0][-4:] == ".hdr":
@@ -124,7 +130,42 @@ class Page1(QtWidgets.QWizardPage):
                     print(len(self.spec)," data read")
 
                 else:
-                    print("No data file found corresponding to header.")
+                    print("No data file found corresponding to header.")       
+                    
+                self.wizard().spectrum_hdr = fname[0]   # pass back to main Wizard class
+                self.wizard().spectrum_dat = datfile
+                
+                self.SpectrumFile.setIcon(self.tick_icon)  # add a tick to show the user it has been completed.
+                
+    
+    def _add_linelist(self):             
+        fname = QFileDialog.getOpenFileName(self, "Select Linelist File", "", "Header Files (*.txt);;All Files (*)")
+        if fname:                
+            self.wizard().linelist_file = fname[0]   
+            self.SpectrumFile.setIcon(self.tick_icon) 
+            
+    def _add_levels(self):             
+        fname = QFileDialog.getOpenFileName(self, "Select Levels File", "", "Header Files (*.lev);;All Files (*)")
+        if fname:                
+            self.wizard().level_file = fname[0]   
+            self.SpectrumFile.setIcon(self.tick_icon) 
+            
+    def _add_calcs(self):             
+        fname = QFileDialog.getOpenFileName(self, "Select Calculations File", "", "Header Files (*.txt);;All Files (*)")
+        if fname:                
+            self.wizard().calc_file = fname[0]  
+            self.SpectrumFile.setIcon(self.tick_icon) 
+            
+    def _add_prev_idents(self):             
+        fname = QFileDialog.getOpenFileName(self, "Select Previous Identifications File", "", "Header Files (*.txt);;All Files (*)")
+        if fname:                
+            self.wizard().prev_idents_file = fname[0]  
+            self.SpectrumFile.setIcon(self.tick_icon)  
+
+
+
+
+
 
 
 
