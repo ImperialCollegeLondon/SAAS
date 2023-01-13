@@ -32,9 +32,12 @@ class MagicWizard(QtWidgets.QWizard):
         self.level_file = ''
         self.calc_file = ''
         self.prev_idents_file = ''
-          
+        self.project_title = ''
+        self.user = ''
+        self.institute = ''         
            
     def onFinish(self):  # this could be where we do all of the hdf5 creation etc. That would be best as the file won't be created if the user presses the cancel button.
+        print(self.user, self.project_title, self.institute)
         print(self.spectrum_hdr, self.spectrum_dat, self.linelist_file, self.level_file, self.prev_idents_file)
 
 
@@ -64,8 +67,6 @@ class PageInfo(QtWidgets.QWizardPage):
         # layout.addRow(self.CreateHDF)
         self.setLayout(layout)
 
-    
-
     def initializePage(self):
         #self.heading.setText("This wizard will help you create a hdf5 file for your branching fraction project")
         self.title_label.setText("Enter a title for your project")
@@ -80,12 +81,13 @@ class PageInfo(QtWidgets.QWizardPage):
         # spectrum_group = hdf_file.create_group("Spectra")
         print('TEST')  # just in for testing so I don't create the file over and over
         
+        self.wizard().project_title = self.title.text()
+        self.wizard().user = self.user.text()
+        self.wizard().institute = self.institute.text()
+        
         next_button = self.wizard().button(QtWidgets.QWizard.NextButton) 
         next_button.disconnect()   # otherwise the next button permantently connected to the _create_hdf function
         next_button.clicked.connect(self.wizard().next)  # reconnects to its original function
-
-  
-
 
 
 class Page1(QtWidgets.QWizardPage):
@@ -102,7 +104,7 @@ class Page1(QtWidgets.QWizardPage):
         self.IDFile = QPushButton("Add Previous Identifications")
 
         self.SpectrumFile.clicked.connect(self._add_spectrum)
-        self.LevelsFile.clicked.connect(self._add_linelist)
+        self.LinesFile.clicked.connect(self._add_linelist)
         self.LevelsFile.clicked.connect(self._add_levels)
         self.CalcsFile.clicked.connect(self._add_calcs)
         self.IDFile.clicked.connect(self._add_prev_idents)
@@ -147,32 +149,25 @@ class Page1(QtWidgets.QWizardPage):
         fname = QFileDialog.getOpenFileName(self, "Select Linelist File", "", "Header Files (*.txt);;All Files (*)")
         if fname:                
             self.wizard().linelist_file = fname[0]   
-            self.SpectrumFile.setIcon(self.tick_icon) 
+            self.LinesFile.setIcon(self.tick_icon) 
             
     def _add_levels(self):             
         fname = QFileDialog.getOpenFileName(self, "Select Levels File", "", "Header Files (*.lev);;All Files (*)")
         if fname:                
             self.wizard().level_file = fname[0]   
-            self.SpectrumFile.setIcon(self.tick_icon) 
+            self.LevelsFile.setIcon(self.tick_icon) 
             
     def _add_calcs(self):             
         fname = QFileDialog.getOpenFileName(self, "Select Calculations File", "", "Header Files (*.txt);;All Files (*)")
         if fname:                
             self.wizard().calc_file = fname[0]  
-            self.SpectrumFile.setIcon(self.tick_icon) 
+            self.CalcsFile.setIcon(self.tick_icon) 
             
     def _add_prev_idents(self):             
         fname = QFileDialog.getOpenFileName(self, "Select Previous Identifications File", "", "Header Files (*.txt);;All Files (*)")
         if fname:                
             self.wizard().prev_idents_file = fname[0]  
-            self.SpectrumFile.setIcon(self.tick_icon)  
-
-
-
-
-
-
-
+            self.IDFile.setIcon(self.tick_icon)  
 
 
 class Page2(QtWidgets.QWizardPage):
@@ -188,6 +183,7 @@ class Page2(QtWidgets.QWizardPage):
     def initializePage(self):
         self.label1.setText("Example text")
         self.label2.setText("Example text")
+
 
 if __name__ == '__main__':
     import sys
