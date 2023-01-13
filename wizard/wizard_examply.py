@@ -37,15 +37,15 @@ class PageInfo(QtWidgets.QWizardPage):
         self.user = QLineEdit()
         self.inst_label = QLabel()
         self.institute = QLineEdit()
-        self.CreateHDF = QPushButton("Create HDF5 File")
-        self.CreateHDF.clicked.connect(self._create_hdf5)
+        # self.CreateHDF = QPushButton("Create HDF5 File")
+        # self.CreateHDF.clicked.connect(self._create_hdf5)
 
         layout = QtWidgets.QFormLayout()
         layout.addRow(self.heading)
         layout.addRow(self.title_label,self.title)
         layout.addRow(self.user_label,self.user)
         layout.addRow(self.inst_label,self.institute)
-        layout.addRow(self.CreateHDF)
+        # layout.addRow(self.CreateHDF)
         self.setLayout(layout)
 
     
@@ -55,10 +55,19 @@ class PageInfo(QtWidgets.QWizardPage):
         self.title_label.setText("Enter a title for your project ")
         self.user_label.setText("Enter your name ")
         self.inst_label.setText("Enter your institution and supervisor if student")
+        
+        next_button = self.wizard().button(QtWidgets.QWizard.NextButton)  # I think people will forget to clicke the "Create HDF" button, so I connected the function to the next button instead
+        next_button.clicked.connect(self._create_hdf5)
 
     def _create_hdf5(self):
-        hdf_file = h5py.File(str(self.title.text()) + ".hdf5",'w')
-        spectrum_group = hdf_file.create_group("Spectra")
+        # hdf_file = h5py.File(str(self.title.text()) + ".hdf5",'w')
+        # spectrum_group = hdf_file.create_group("Spectra")
+        print('TEST')  # just in for testing so I don't create the file over and over
+        
+        next_button = self.wizard().button(QtWidgets.QWizard.NextButton) 
+        next_button.disconnect()   # otherwise the next button permantently connected to the _create_hdf function
+        next_button.clicked.connect(self.wizard().next)  # reconnects to its original function
+
   
 
 
