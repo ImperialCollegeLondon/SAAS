@@ -22,6 +22,13 @@ class MagicWizard(QtWidgets.QWizard):
         self.addPage(Page2(self))
         self.setWindowTitle("SAAS - hdf5 file creation wizard")
         self.resize(640,480)
+        
+        self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.onFinish) 
+        
+        self.test = ''  # just a dummy variable, but we can have others here with .hdr file names, project titles, etc. etc.
+           
+    def onFinish(self):  # this could be where we do all of the hdf5 creation etc. That would be best as the file won't be created if the user presses the cancel button.
+        print(self.test)
 
 
 class PageInfo(QtWidgets.QWizardPage):
@@ -56,7 +63,7 @@ class PageInfo(QtWidgets.QWizardPage):
         self.user_label.setText("Enter your name ")
         self.inst_label.setText("Enter your institution and supervisor if student")
         
-        next_button = self.wizard().button(QtWidgets.QWizard.NextButton)  # I think people will forget to clicke the "Create HDF" button, so I connected the function to the next button instead
+        next_button = self.wizard().button(QtWidgets.QWizard.NextButton)  # I think people will forget to clicke the "Create HDF" button, so I connected the function to the next button instead - we could connect it to the "finish" button and do all of this at the end?
         next_button.clicked.connect(self._create_hdf5)
 
     def _create_hdf5(self):
@@ -92,9 +99,16 @@ class Page1(QtWidgets.QWizardPage):
         layout.addWidget(self.CalcsFile)
         layout.addWidget(self.IDFile)        
         self.setLayout(layout)
-
+        
+        
+        
+        
+      
     def _add_spectrum(self):
-
+        self.wizard().test = 'It Worked!'  # this is how we pass variables back to the main Wizard class
+        
+        
+        
         fname = QFileDialog.getOpenFileName(self, "Open File", "", "Header Files (*.hdr);;All Files (*)")
         if fname:
 #            print(spectrum[0])
