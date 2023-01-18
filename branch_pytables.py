@@ -29,9 +29,9 @@ class PreviousLinesTable(tb.IsDescription):
     upper_energy = tb.Float64Col()
     lower_desig = tb.StringCol(32)
     upper_desig = tb.StringCol(32)
-    snr = tb.Float64Col()
-    intensity = tb.Float64Col()
-    note = tb.StringCol(64)
+    #snr = tb.Float64Col()
+    intensity = tb.StringCol(32)
+    #note = tb.StringCol(64)
     
     
 class SpectrumTable(tb.IsDescription):
@@ -62,9 +62,9 @@ calculations_group = fileh.create_group(fileh.root, 'calculations', 'Calculation
 hdr_file = 'test.hdr'
 dat_file = 'test.dat'
 lin_file = 'test.cln'
-lev_file = 'test.lev'
-
-print(lin_file)
+lev_file = 'test_lev.csv'
+calc_file = 'test_calc.csv'
+prev_file = 'test_prev.csv'
 
 def create_spectrum_table(hdf5file, dat_file, hdr_file):
     spectrum_group = hdf5file.create_group(spectra_group, dat_file[:-4], dat_file[:-4])  # create the group for the spectra
@@ -141,31 +141,73 @@ def create_lin_table(hdf5file, file, group=None):
         row.append()    
     table.flush()
     
-def create_lev_table(hdf5file, file):
-    levels = np.genfromtxt(file, delimiter='\t', dtype=None, names=True, autostrip=True, encoding='utf-8')  # all data with columns headers !may want to specify column datatypes 
+def create_lev_table(hdf5file, file):      
+    levels = np.genfromtxt(file, delimiter=',', dtype=None, names=True, autostrip=True, encoding='utf-8', skip_header=3)  # all data with columns headers !may want to specify column datatypes 
     table = hdf5file.create_table(levels_group, 'levels', EnergyTable, file)  # create table for .dat file    
+    
+    with open(file, 'r') as f:   #get and set header attributes
+        header = f.readlines()[:3]
+        table.attrs.source = header[0].split('=')[-1].strip()
+        table.attrs.date = header[1].split('=')[-1].strip()
+        table.attrs.info = header[2].split('=')[-1].strip()           
     
     row = table.row
     for level in levels:
         row['desig'] = level['Designation']
-        row['j'] = float(level['J'])
+        row['j'] = level['J']
         row['energy'] = level['Energy']
         row['energy_unc'] = level['Energy_Unc']
         row['parity'] = level['Parity']
         row['species'] = level['Species']
-        
-        if '-' in level['Lifetime']:  # ! we need to do error checking on all of these files
-            row['lifetime'] = 0.0
-        else:
-            row['lifetime'] = level['Lifetime']
-            
-        row['lifetime_unc'] = 0.5  # ! hardcoded for now
+        row['lifetime'] = level['Lifetime']             
+        row['lifetime_unc'] = level['Lifetime_Unc'] 
         row.append()
     table.flush()  
         
         
+def create_calc_table(hdf5file, file):
+    lines = np.genfromtxt(file, delimiter=',', dtype=None, names=True, autostrip=True, encoding='utf-8', skip_header=3)  # all data with columns headers !may want to specify column datatypes 
+    table = hdf5file.create_table(calculations_group, 'lines', CalculationTable, file)  # create table for .dat file    
+    
+    with open(file, 'r') as f:   #get and set header attributes
+        header = f.readlines()[:3]
+        table.attrs.source = header[0].split('=')[-1].strip()
+        table.attrs.date = header[1].split('=')[-1].strip()
+        table.attrs.info = header[2].split('=')[-1].strip()           
+    
+    row = table.row
+    for line in lines:
+        row['lower_desig'] = line['lower_desig']
+        row['upper_desig'] = line['upper_desig']
+        row['log_gf'] = line['log_gf']
+        row.append()
+    table.flush()  
+    
+def create_prev_idents_table(hdf5file, file):
+    lines = np.genfromtxt(file, delimiter=',', dtype=None, names=True, autostrip=True, encoding='utf-8', skip_header=3)  # all data with columns headers !may want to specify column datatypes 
+    table = hdf5file.create_table(previous_lines_group, 'lines', PreviousLinesTable, file)  # create table for .dat file    
+    
+    with open(file, 'r') as f:   #get and set header attributes
+        header = f.readlines()[:3]
+        table.attrs.source = header[0].split('=')[-1].strip()
+        table.attrs.date = header[1].split('=')[-1].strip()
+        table.attrs.info = header[2].split('=')[-1].strip()           
+    
+    row = table.row
+    for line in lines:
+        row['wavenumber'] = line['wavenumber']
+        row['lower_energy'] = line['lower_energy']
+        row['upper_energy'] = line['upper_energy']
+        row['lower_desig'] = line['lower_desig']
+        row['upper_desig'] = line['upper_desig']
+        row['intensity'] = line['intensity']
+        row.append()
+    table.flush()  
+              
 create_spectrum_table(fileh, dat_file, hdr_file)
 create_lin_table(fileh, lin_file)
 create_lev_table(fileh, lev_file)
+create_calc_table(fileh, calc_file)
+create_prev_idents_table(fileh, prev_file)
 
 fileh.close()
