@@ -7,52 +7,53 @@ class EnergyTable(tb.IsDescription):
     """Descriptor for energy level data table"""
     desig = tb.StringCol(32)
     j = tb.Float16Col()
-    energy = tb.Float32Col()
-    energy_unc = tb.Float32Col()
+    energy = tb.Float64Col()
+    energy_unc = tb.Float64Col()
     parity = tb.UInt8Col()
     species = tb.StringCol(8)
-    lifetime = tb.Float32Col()
-    lifetime_unc = tb.Float32Col()
+    lifetime = tb.Float64Col()
+    lifetime_unc = tb.Float64Col()
     
     
 class CalculationTable(tb.IsDescription):
     """Descriptor for calcluated lines table"""
     lower_desig = tb.StringCol(32)
     upper_desig = tb.StringCol(32)
-    log_gf = tb.Float32Col()
+    log_gf = tb.Float64Col()
     
     
 class PreviousLinesTable(tb.IsDescription):
     """Descriptor for the previously observed line table"""
-    wavenumber = tb.Float32Col()
-    lower_energy = tb.Float32Col()
-    upper_energy = tb.Float32Col()
+    wavenumber = tb.Float64Col()
+    lower_energy = tb.Float64Col()
+    upper_energy = tb.Float64Col()
     lower_desig = tb.StringCol(32)
     upper_desig = tb.StringCol(32)
-    snr = tb.Float32Col()
-    intensity = tb.Float32Col()
+    snr = tb.Float64Col()
+    intensity = tb.Float64Col()
     note = tb.StringCol(64)
     
     
-class SprectumTable(tb.IsDescription):
+class SpectrumTable(tb.IsDescription):
     """Descriptor for Spectrum .dat table. The .hdr data will all be stored at attributes (attrs) of this table"""
-    wavenumber = tb.Float32Col()
-    snr = tb.Float32Col()
+    wavenumber = tb.Float64Col()
+    snr = tb.Float64Col()
     
     
 class LinelistTable(tb.IsDescription):
     """Descriptor for the linelist file associated with a spectrum. Wavenumber, air and intensity correction will be stored as attributes of this table"""
     line_num = tb.UInt16Col()
-    wavenumber = tb.Float32Col()
-    snr = tb.Float32Col()
-    width = tb.Float32Col()  # in mK (10^-3 cm-1)
-    damping = tb.Float32Col()
-    eq_width = tb.Float32Col()
+    wavenumber = tb.Float64Col()
+    snr = tb.Float64Col()
+    width = tb.Float64Col()  # in mK (10^-3 cm-1)
+    damping = tb.Float64Col()
+    eq_width = tb.Float64Col()
     tags = tb.StringCol(8)
     
 
 fileh = tb.open_file('test.h5', 'w')
 
+# Creating main groups in hdf5 file
 levels_group = fileh.create_group(fileh.root, 'levels', 'Levels')
 spectra_group = fileh.create_group(fileh.root, 'spectra', 'Spectra')
 previous_lines_group = fileh.create_group(fileh.root, 'previousLines', 'Previous Lines')
@@ -62,9 +63,11 @@ hdr_file = 'test.hdr'
 dat_file = 'test.dat'
 lin_file = 'test.cln'
 
+print(lin_file)
+
 def create_spectrum_table(hdf5file, group, dat_file, hdr_file):
     spectrum_group = hdf5file.create_group(group, dat_file[:-4], dat_file[:-4])  # create the group for the spectra
-    table = hdf5file.create_table(spectrum_group, dat_file[:-4], SprectumTable, dat_file)  # create table for .dat file
+    table = hdf5file.create_table(spectrum_group, 'spectrum', SpectrumTable, dat_file)  # create table for .dat file
 
     # Set attributes of the .dat table as the parameters of the .hdr file
     with open(hdr_file, 'r') as f:
@@ -86,29 +89,62 @@ def create_spectrum_table(hdf5file, group, dat_file, hdr_file):
                     pass                
                              
                 table.set_attr(parameter, value)  # set hdr parameters as attributes of the .dat table
-                                  
+    
+    # Populate .dat table with data points                              
     with open(dat_file, 'r') as f:
         spec = np.fromfile(f, np.float32)        
-        data_point = table.row
-        wavenum = table.attrs.wstart
+        data_point = table.row  # gives pointer for starting row in table
+        wavenum = table.attrs.wstart  # starting wavenumber
         
         for line in spec:
             data_point['wavenumber'] = wavenum
             data_point['snr'] = line
-            wavenum += table.attrs.delw
-            data_point.append()
-            
-            
+            wavenum += table.attrs.delw  # increment wavenumber by dispersion
+            data_point.append()  # write from I/O buffer to hdf5 file
+        
+        table.flush()
 
+def create_lin_table(hdf5file, lin_file, group=None):
 
-
-# def create_lin_table():
-#     with open('test.cln', 'r') as lin_file:
-#         lin_lines = lin_file.readlines()
+    with open(lin_file, 'r') as f:
+        header = f.readlines(150)
+        if 'NO' in header[0]:
+            wavenumber_calib = False
+        else:  # !need to change this to provide the correct wavenumber correction factor
+            wavenumber_calib = True
+        if 'NO' in header[1]:
+            air_calib = False
+        else:
+            air_calib = True
+        if 'NO' in header[2]:
+            intensity_calib = False
+        else:
+            intensity_calib = True
+        
     
-#     for line in lin_lines[4:]:  # skip header
-  
-  
+    lines = np.genfromtxt(lin_file, dtype=None, skip_header=3, names=True, autostrip=True, usecols=(0,1,2,3,4,5,8), encoding='utf-8')  # all data with columns headers !may want to specify column datatypes
+    
+    spectrum_group = hdf5file.get_node(spectra_group, lin_file[:-4]) 
+    table = hdf5file.create_table(spectrum_group, 'linelist', LinelistTable, lin_file)  # create table for .dat file    
+    
+    table.attrs.wavenumber_correction = wavenumber_calib
+    table.attrs.air_correction = air_calib
+    table.attrs.intensity_calibration = intensity_calib
+    
+    row = table.row
+    for line in lines:
+        row['line_num'] = line['line']
+        row['wavenumber'] = line['wavenumber']
+        row['snr'] = line['peak']
+        row['width'] = line['width']
+        row['damping'] = line['dmp']
+        row['eq_width'] = line['eq']
+        row['tags'] = line['H']  # not the tags column due to the way numpy names columns, but does give the correct value
+        row.append()
+        
+    table.flush()
         
 create_spectrum_table(fileh, spectra_group, dat_file, hdr_file)
+create_lin_table(fileh, lin_file)
+
 fileh.close()
