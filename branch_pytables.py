@@ -6,7 +6,7 @@ import numpy as np
 class EnergyTable(tb.IsDescription):
     """Descriptor for energy level data table"""
     desig = tb.StringCol(32)
-    j = tb.Float16Col()
+    j = tb.Float64Col()
     energy = tb.Float64Col()
     energy_unc = tb.Float64Col()
     parity = tb.UInt8Col()
@@ -62,11 +62,12 @@ calculations_group = fileh.create_group(fileh.root, 'calculations', 'Calculation
 hdr_file = 'test.hdr'
 dat_file = 'test.dat'
 lin_file = 'test.cln'
+lev_file = 'test.lev'
 
 print(lin_file)
 
-def create_spectrum_table(hdf5file, group, dat_file, hdr_file):
-    spectrum_group = hdf5file.create_group(group, dat_file[:-4], dat_file[:-4])  # create the group for the spectra
+def create_spectrum_table(hdf5file, dat_file, hdr_file):
+    spectrum_group = hdf5file.create_group(spectra_group, dat_file[:-4], dat_file[:-4])  # create the group for the spectra
     table = hdf5file.create_table(spectrum_group, 'spectrum', SpectrumTable, dat_file)  # create table for .dat file
 
     # Set attributes of the .dat table as the parameters of the .hdr file
@@ -93,18 +94,17 @@ def create_spectrum_table(hdf5file, group, dat_file, hdr_file):
     # Populate .dat table with data points                              
     with open(dat_file, 'r') as f:
         spec = np.fromfile(f, np.float32)        
-        data_point = table.row  # gives pointer for starting row in table
         wavenum = table.attrs.wstart  # starting wavenumber
-        
+       
+        data_point = table.row  # gives pointer for starting row in table
         for line in spec:
             data_point['wavenumber'] = wavenum
             data_point['snr'] = line
             wavenum += table.attrs.delw  # increment wavenumber by dispersion
             data_point.append()  # write from I/O buffer to hdf5 file
-        
         table.flush()
 
-def create_lin_table(hdf5file, lin_file, group=None):
+def create_lin_table(hdf5file, file, group=None):
 
     with open(lin_file, 'r') as f:
         header = f.readlines(150)
@@ -119,13 +119,11 @@ def create_lin_table(hdf5file, lin_file, group=None):
         if 'NO' in header[2]:
             intensity_calib = False
         else:
-            intensity_calib = True
-        
+            intensity_calib = True  
     
-    lines = np.genfromtxt(lin_file, dtype=None, skip_header=3, names=True, autostrip=True, usecols=(0,1,2,3,4,5,8), encoding='utf-8')  # all data with columns headers !may want to specify column datatypes
-    
-    spectrum_group = hdf5file.get_node(spectra_group, lin_file[:-4]) 
-    table = hdf5file.create_table(spectrum_group, 'linelist', LinelistTable, lin_file)  # create table for .dat file    
+    lines = np.genfromtxt(file, dtype=None, skip_header=3, names=True, autostrip=True, usecols=(0,1,2,3,4,5,8), encoding='utf-8')  # all data with columns headers !may want to specify column datatypes 
+    spectrum_group = hdf5file.get_node(spectra_group, file[:-4]) 
+    table = hdf5file.create_table(spectrum_group, 'linelist', LinelistTable, file)  # create table for .dat file    
     
     table.attrs.wavenumber_correction = wavenumber_calib
     table.attrs.air_correction = air_calib
@@ -140,11 +138,34 @@ def create_lin_table(hdf5file, lin_file, group=None):
         row['damping'] = line['dmp']
         row['eq_width'] = line['eq']
         row['tags'] = line['H']  # not the tags column due to the way numpy names columns, but does give the correct value
-        row.append()
-        
+        row.append()    
     table.flush()
+    
+def create_lev_table(hdf5file, file):
+    levels = np.genfromtxt(file, delimiter='\t', dtype=None, names=True, autostrip=True, encoding='utf-8')  # all data with columns headers !may want to specify column datatypes 
+    table = hdf5file.create_table(levels_group, 'levels', EnergyTable, file)  # create table for .dat file    
+    
+    row = table.row
+    for level in levels:
+        row['desig'] = level['Designation']
+        row['j'] = float(level['J'])
+        row['energy'] = level['Energy']
+        row['energy_unc'] = level['Energy_Unc']
+        row['parity'] = level['Parity']
+        row['species'] = level['Species']
         
-create_spectrum_table(fileh, spectra_group, dat_file, hdr_file)
+        if '-' in level['Lifetime']:  # ! we need to do error checking on all of these files
+            row['lifetime'] = 0.0
+        else:
+            row['lifetime'] = level['Lifetime']
+            
+        row['lifetime_unc'] = 0.5  # ! hardcoded for now
+        row.append()
+    table.flush()  
+        
+        
+create_spectrum_table(fileh, dat_file, hdr_file)
 create_lin_table(fileh, lin_file)
+create_lev_table(fileh, lev_file)
 
 fileh.close()
