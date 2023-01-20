@@ -8,6 +8,7 @@ from lmfit.models import VoigtModel
 import sys
 from PyQt5 import QtCore, QtWidgets, uic
 from PyQt5.QtCore import Qt
+import branchClasses as bc
 
 matplotlib.use('QT5Agg')
 
@@ -102,7 +103,7 @@ class MyWindow(QtWidgets.QMainWindow):
         uic.loadUi('mainwindow2.ui', self) 
         self.main_splitter.setSizes([300, 1000])
         self.right_splitter.setSizes([1000, 350])
-        
+               
         outer_layout = QtWidgets.QVBoxLayout()
         
         plot_positions = [[True, True, True, False, False], 
@@ -143,6 +144,10 @@ class MyWindow(QtWidgets.QMainWindow):
     def right_clicked(self):
         print(self.main_splitter.sizes())
         print('right click')  
+        
+    # def create_level_obj(self)
+    
+        
        
        
 if __name__ == '__main__':

@@ -2,6 +2,7 @@
 
 import tables as tb
 import numpy as np
+import pandas as pd
 
 class EnergyTable(tb.IsDescription):
     """Descriptor for energy level data table"""
@@ -51,13 +52,15 @@ class LinelistTable(tb.IsDescription):
     tags = tb.StringCol(8)
     
 
-fileh = tb.open_file('test.h5', 'w')
+# fileh = tb.open_file('test.h5', 'w')
+fileh = tb.open_file('test.h5', 'r')
 
 # Creating main groups in hdf5 file
-levels_group = fileh.create_group(fileh.root, 'levels', 'Levels')
-spectra_group = fileh.create_group(fileh.root, 'spectra', 'Spectra')
-previous_lines_group = fileh.create_group(fileh.root, 'previousLines', 'Previous Lines')
-calculations_group = fileh.create_group(fileh.root, 'calculations', 'Calculations')
+# levels_group = fileh.create_group(fileh.root, 'levels', 'Levels')
+# spectra_group = fileh.create_group(fileh.root, 'spectra', 'Spectra')
+# previous_lines_group = fileh.create_group(fileh.root, 'previousLines', 'Previous Lines')
+# calculations_group = fileh.create_group(fileh.root, 'calculations', 'Calculations')
+# matched_lines_group = fileh.create_group(fileh.root, 'matched_lines', 'Matched Lines')
 
 hdr_file = 'test.hdr'
 dat_file = 'test.dat'
@@ -203,11 +206,37 @@ def create_prev_idents_table(hdf5file, file):
         row['intensity'] = line['intensity']
         row.append()
     table.flush()  
-              
-create_spectrum_table(fileh, dat_file, hdr_file)
-create_lin_table(fileh, lin_file)
-create_lev_table(fileh, lev_file)
-create_calc_table(fileh, calc_file)
-create_prev_idents_table(fileh, prev_file)
+                 
+# create_spectrum_table(fileh, dat_file, hdr_file)
+# create_lin_table(fileh, lin_file)
+# create_lev_table(fileh, lev_file)
+# create_calc_table(fileh, calc_file)
+# create_prev_idents_table(fileh, prev_file)
+
+def create_matched_lines_table(hdf5file):
+    """Matches calculated lines with previously observed lines. Creates a new table with the matched lines"""
+    calculated_lines = pd.DataFrame(hdf5file.root.calculations.lines.read(), )  # read into a numpy structured array
+    previous_lines = pd.DataFrame(hdf5file.root.previousLines.lines.read())
+    
+    # THIS IS HOW YOU DO QUERIES
+    test = pd.DataFrame(hdf5file.root.previousLines.lines.read_where('''(lower_energy < 30000.)'''))
+    print(test['intensity'])
+    
+    print(type(calculated_lines['log_gf']))
+    print(previous_lines[previous_lines['upper_desig'] == b'a3P4p_y4D0'])
+    print(calculated_lines.head())
+    print(previous_lines.head())
+    
+    matched_lines = pd.merge(calculated_lines, previous_lines, how="inner", on=['upper_desig', 'lower_desig'])
+    
+    print(matched_lines)
+
+
+    
+
+
+
+
+create_matched_lines_table(fileh)
 
 fileh.close()

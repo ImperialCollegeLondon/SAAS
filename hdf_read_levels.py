@@ -1,5 +1,5 @@
 import h5py
-from branching_fraction import EnergyLevel, Spectrum, LineSpec
+from branchClasses import EnergyLevel, Spectrum, LineSpec
 
 
 """ 
