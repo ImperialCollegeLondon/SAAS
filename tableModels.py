@@ -41,7 +41,7 @@ class levelTableModel(QtCore.QAbstractTableModel):
             
     def sort(self, Ncol, order):
         """Sort table by given column number."""
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit()  # tells the view controller that the underlying data is about to be changed
         self._data = self._data.sort_values(list(self._data)[Ncol], ascending=order == Qt.AscendingOrder)  # list(self._data) gives a list of the dataFrame headers
         self.layoutChanged.emit()
             

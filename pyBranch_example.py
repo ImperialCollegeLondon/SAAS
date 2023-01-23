@@ -111,6 +111,7 @@ class MyWindow(QtWidgets.QMainWindow):
 
         self.draw_line_plots()
         self.display_levels_table()
+        self.display_files_tree()
     
     def draw_line_plots(self):
         outer_layout = QtWidgets.QVBoxLayout()
@@ -147,18 +148,40 @@ class MyWindow(QtWidgets.QMainWindow):
         self.inner.setStyleSheet('background-color: #EFEFEF')
         
     def display_levels_table(self):
+        """Displays the data in the levels dataframe to the levels table view in the main window"""
         data = pd.DataFrame(self.fileh.root.levels.levels.read())
 
         self.model = tm.levelTableModel(data)
         self.levelsTableView.setModel(self.model)
+        
+        # Set all of the correct flags and views
         self.levelsTableView.setSortingEnabled(True)
-        self.levelsTableView.horizontalHeader().setStretchLastSection(True)
         self.levelsTableView.setAlternatingRowColors(True)
-        self.levelsTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)
+        self.levelsTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)  # so a full row is selected when any cell is clicked
+        self.levelsTableView.horizontalHeader().setStretchLastSection(True)
         stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
         self.levelsTableView.horizontalHeader().setStyleSheet(stylesheet)
         self.levelsTableView.resizeColumnsToContents()
+        
+    def display_files_tree(self):
+        
+        data = {"Project A": ["file_a.py", "file_a.txt", "something.xls"],
+        "Project B": ["file_b.csv", "photo.jpg"],
+        "Project C": []}
+            
+        self.filesTreeWidget.setColumnCount(2)
+        self.filesTreeWidget.setHeaderLabels(["Name", "Type"])
+                
+        items = []
+        for key, values in data.items():
+            item = QtWidgets.QTreeWidgetItem([key])
+            for value in values:
+                ext = value.split(".")[-1].upper()
+                child = QtWidgets.QTreeWidgetItem([value, ext])
+                item.addChild(child)
+            items.append(item)
 
+        self.filesTreeWidget.insertTopLevelItems(0, items)
     
     def left_clicked(self):
         fig = self.sender()
