@@ -9,6 +9,9 @@ import sys
 from PyQt5 import QtCore, QtWidgets, uic
 from PyQt5.QtCore import Qt
 import branchClasses as bc
+import tableModels as tm
+import pandas as pd
+import tables as tb
 
 matplotlib.use('QT5Agg')
 
@@ -101,9 +104,15 @@ class MyWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
         uic.loadUi('mainwindow2.ui', self) 
-        self.main_splitter.setSizes([300, 1000])
-        self.right_splitter.setSizes([1000, 350])
-               
+        self.main_splitter.setSizes([300, 1000])  # ! put these as percentage of window size
+        self.right_splitter.setSizes([1000, 350]) # ! put these as percentage of window size
+        
+        self.fileh = tb.open_file('test.h5', 'r')             
+
+        self.draw_line_plots()
+        self.display_levels_table()
+    
+    def draw_line_plots(self):
         outer_layout = QtWidgets.QVBoxLayout()
         
         plot_positions = [[True, True, True, False, False], 
@@ -136,6 +145,20 @@ class MyWindow(QtWidgets.QMainWindow):
         
         self.inner.setLayout(outer_layout)
         self.inner.setStyleSheet('background-color: #EFEFEF')
+        
+    def display_levels_table(self):
+        data = pd.DataFrame(self.fileh.root.levels.levels.read())
+
+        self.model = tm.levelTableModel(data)
+        self.levelsTableView.setModel(self.model)
+        self.levelsTableView.setSortingEnabled(True)
+        self.levelsTableView.horizontalHeader().setStretchLastSection(True)
+        self.levelsTableView.setAlternatingRowColors(True)
+        self.levelsTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)
+        stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
+        self.levelsTableView.horizontalHeader().setStyleSheet(stylesheet)
+        self.levelsTableView.resizeColumnsToContents()
+
     
     def left_clicked(self):
         fig = self.sender()

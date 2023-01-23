@@ -38,7 +38,7 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;    standard lamp spectrum&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
-       <widget class="QTableWidget" name="tableWidget"/>
+       <widget class="QTableView" name="levelsTableView"/>
       </widget>
       <widget class="QSplitter" name="right_splitter">
        <property name="orientation">

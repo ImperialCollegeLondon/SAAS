@@ -215,21 +215,25 @@ def create_prev_idents_table(hdf5file, file):
 
 def create_matched_lines_table(hdf5file):
     """Matches calculated lines with previously observed lines. Creates a new table with the matched lines"""
-    calculated_lines = pd.DataFrame(hdf5file.root.calculations.lines.read(), )  # read into a numpy structured array
+    calculated_lines = pd.DataFrame(hdf5file.root.calculations.lines.read(), )  # read into a numpy structured array and convert to Dataframe
     previous_lines = pd.DataFrame(hdf5file.root.previousLines.lines.read())
     
     # THIS IS HOW YOU DO QUERIES
-    test = pd.DataFrame(hdf5file.root.previousLines.lines.read_where('''(lower_energy < 30000.)'''))
-    print(test['intensity'])
+    field_name = 'lower_energy'
+    value = 25000.
+    string = f'({field_name} < {value})'
+    test = pd.DataFrame(hdf5file.root.previousLines.lines.read_where(string))
+    # print(test['intensity'])
     
-    print(type(calculated_lines['log_gf']))
-    print(previous_lines[previous_lines['upper_desig'] == b'a3P4p_y4D0'])
-    print(calculated_lines.head())
-    print(previous_lines.head())
+    # print(type(calculated_lines['log_gf']))
+    # print(previous_lines[previous_lines['upper_desig'] == b'a3P4p_y4D0'])
+    # print(calculated_lines.head())
+    # print(previous_lines.head())
     
-    matched_lines = pd.merge(calculated_lines, previous_lines, how="inner", on=['upper_desig', 'lower_desig'])
+    #This is how we will merge lists together - matching the calc log_gf to observed lines. ""Outer" ensures all lines are kept.
+    matched_lines = pd.merge(calculated_lines, previous_lines, how="outer", on=['upper_desig', 'lower_desig'])
     
-    print(matched_lines)
+    print(test)
 
 
     
