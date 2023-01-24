@@ -3,6 +3,7 @@
 import tables as tb
 import numpy as np
 import pandas as pd
+import h5py
 
 class EnergyTable(tb.IsDescription):
     """Descriptor for energy level data table"""
@@ -52,18 +53,20 @@ class LinelistTable(tb.IsDescription):
     tags = tb.StringCol(8)
     
 
-# fileh = tb.open_file('test.h5', 'w')
-fileh = tb.open_file('test.h5', 'r')
+fileh = tb.open_file('test.h5', 'w')
+# fileh = tb.open_file('test.h5', 'r')
 
-# Creating main groups in hdf5 file
-# levels_group = fileh.create_group(fileh.root, 'levels', 'Levels')
-# spectra_group = fileh.create_group(fileh.root, 'spectra', 'Spectra')
-# previous_lines_group = fileh.create_group(fileh.root, 'previousLines', 'Previous Lines')
-# calculations_group = fileh.create_group(fileh.root, 'calculations', 'Calculations')
-# matched_lines_group = fileh.create_group(fileh.root, 'matched_lines', 'Matched Lines')
+## Creating main groups in hdf5 file
+levels_group = fileh.create_group(fileh.root, 'levels', 'Levels')
+spectra_group = fileh.create_group(fileh.root, 'spectra', 'Spectra')
+previous_lines_group = fileh.create_group(fileh.root, 'previousLines', 'Previous Lines')
+calculations_group = fileh.create_group(fileh.root, 'calculations', 'Calculations')
+matched_lines_group = fileh.create_group(fileh.root, 'matched_lines', 'Matched Lines')
 
 hdr_file = 'test.hdr'
+hdr_file_2 = 'test2.hdr'
 dat_file = 'test.dat'
+dat_file_2 = 'test2.dat'
 lin_file = 'test.cln'
 lev_file = 'test_lev.csv'
 calc_file = 'test_calc.csv'
@@ -207,11 +210,12 @@ def create_prev_idents_table(hdf5file, file):
         row.append()
     table.flush()  
                  
-# create_spectrum_table(fileh, dat_file, hdr_file)
-# create_lin_table(fileh, lin_file)
-# create_lev_table(fileh, lev_file)
-# create_calc_table(fileh, calc_file)
-# create_prev_idents_table(fileh, prev_file)
+create_spectrum_table(fileh, dat_file, hdr_file)
+create_spectrum_table(fileh, dat_file_2, hdr_file_2)
+create_lin_table(fileh, lin_file)
+create_lev_table(fileh, lev_file)
+create_calc_table(fileh, calc_file)
+create_prev_idents_table(fileh, prev_file)
 
 def create_matched_lines_table(hdf5file):
     """Matches calculated lines with previously observed lines. Creates a new table with the matched lines"""
@@ -241,6 +245,6 @@ def create_matched_lines_table(hdf5file):
 
 
 
-create_matched_lines_table(fileh)
+# create_matched_lines_table(fileh)
 
 fileh.close()

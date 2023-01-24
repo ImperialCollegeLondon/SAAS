@@ -12,6 +12,10 @@ class levelTableModel(QtCore.QAbstractTableModel):
         """The data to be displayed. This is the levels dataframe"""
         if role == Qt.DisplayRole:
             value = self._data.iloc[index.row(), index.column()]
+            
+            if isinstance(value, bytes):  # changes from byte string to utf-8 for display only ! could cast whole pandas column to utf-8 if needed
+                value = value.decode('utf-8')
+                        
             return str(value)
 
     def rowCount(self, index):

@@ -38,6 +38,14 @@ yy = dat[left_pos: right_pos]
 xx = wnum[left_pos: right_pos]
 
 
+
+### read the wavenumber from the spectrum
+
+
+
+
+
+
 class LinePlot(FigureCanvasQTAgg):
     """Class for the matplotlib plots of individual lines"""
     
@@ -164,24 +172,33 @@ class MyWindow(QtWidgets.QMainWindow):
         self.levelsTableView.resizeColumnsToContents()
         
     def display_files_tree(self):
-        
-        data = {"Project A": ["file_a.py", "file_a.txt", "something.xls"],
-        "Project B": ["file_b.csv", "photo.jpg"],
-        "Project C": []}
-            
-        self.filesTreeWidget.setColumnCount(2)
-        self.filesTreeWidget.setHeaderLabels(["Name", "Type"])
-                
-        items = []
-        for key, values in data.items():
-            item = QtWidgets.QTreeWidgetItem([key])
-            for value in values:
-                ext = value.split(".")[-1].upper()
-                child = QtWidgets.QTreeWidgetItem([value, ext])
-                item.addChild(child)
-            items.append(item)
+        """To Do: 
+            add in all other fields. 
+            Make a tick box for if the file has been intensity corrected.
+            right click for context menu
+            selection box for making a spectrum the refernce spectrum
+        """
 
+        self.filesTreeWidget.setColumnCount(2)
+        self.filesTreeWidget.setHeaderLabels(["Spectrum", "File", 'Wavenumber Max', 'Wavenumber Min'])
+                
+
+        items = []
+        for key, values in self.fileh.root.spectra._v_children.items():
+            item = QtWidgets.QTreeWidgetItem([key])
+
+            for value in values._v_children.values():
+                child = QtWidgets.QTreeWidgetItem(['',value.title])           
+                item.addChild(child)
+                
+            items.append(item)
+        
         self.filesTreeWidget.insertTopLevelItems(0, items)
+        
+        for col in range(self.filesTreeWidget.columnCount()):  # ! link this to a signal so it auto resizes
+            self.filesTreeWidget.resizeColumnToContents(col)
+        
+        
     
     def left_clicked(self):
         fig = self.sender()
