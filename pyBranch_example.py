@@ -92,9 +92,12 @@ class MyWindow(QtWidgets.QMainWindow):
         self.fileh = tb.open_file('test.h5', 'r')             
 
         self.plot_data = self.get_plot_data()
+        self.matched_lines = self.create_matched_lines()
+        
         self.draw_line_plots()
         self.display_levels_table()
         self.display_files_tree()
+        self.display_lines_table('x')
     
     def draw_line_plots(self):
         outer_layout = QtWidgets.QVBoxLayout()
@@ -172,7 +175,39 @@ class MyWindow(QtWidgets.QMainWindow):
         
         for col in range(self.filesTreeWidget.columnCount()):  # ! link this to a signal so it auto resizes
             self.filesTreeWidget.resizeColumnToContents(col)
+            
+    def display_lines_table(self, upper_level):  
+        # query_string = f'(wavenumber >= {wn_low}) & (wavenumber <= {wn_high})'  # ! do this on the fly! From a matched_lines part of the hdf5file
+        # data = pd.DataFrame(self.fileh.root.XXX.read_where(query_string))
+
+        #! Work around to get the table populated for now 
+
+        self.model = tm.linesTableModel(self.matched_lines)
+        self.linesTableView.setModel(self.model)
         
+        # Set all of the correct flags and views
+        self.linesTableView.setSortingEnabled(True)
+        self.linesTableView.setAlternatingRowColors(True)
+        self.linesTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)  # so a full row is selected when any cell is clicked
+        self.linesTableView.horizontalHeader().setStretchLastSection(True)
+        stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
+        self.linesTableView.horizontalHeader().setStyleSheet(stylesheet)
+        self.linesTableView.resizeColumnsToContents()
+        
+        
+        
+    def create_matched_lines(self):    
+        """Matches calculated lines with previously observed lines. Creates a new table with the matched lines"""
+        calculated_lines = pd.DataFrame(self.fileh.root.calculations.lines.read())  # read into a numpy structured array and convert to Dataframe
+        previous_lines = pd.DataFrame(self.fileh.root.previousLines.lines.read())
+        
+        #This is how we will merge lists together - matching the calc log_gf to observed lines. ""Outer" ensures all lines are kept.
+        matched_lines = pd.merge(calculated_lines, previous_lines, how="outer", on=['upper_desig', 'lower_desig'])
+        # print('matched_lines: ', matched_lines.head())
+        return matched_lines
+        
+     
+    
     
     def left_clicked(self):
         fig = self.sender()
