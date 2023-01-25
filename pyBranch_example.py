@@ -12,8 +12,12 @@ import branchClasses as bc
 import tableModels as tm
 import pandas as pd
 import tables as tb
+import ctypes
 
+### Global settings ###
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID()  # lets windows know we are setting our own icon for the taskbar
 matplotlib.use('QT5Agg')
+#######################
 
 
 class LinePlot(FigureCanvasQTAgg):
@@ -70,12 +74,14 @@ class LinePlot(FigureCanvasQTAgg):
         y = plot_data['snr']
 
         result = self._create_voigt(x, y)
-                
+        
+        # Upper plot        
         self.fig, (self.ax1, self.ax2) = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=(2.5, 3.5))
         self.ax1.plot(x, y)
         #ax1.set(ylabel="Relative intensity")
         self.ax1.ticklabel_format(useOffset=False)
 
+        # Residual plot
         self.ax2.plot(x, y - result.best_fit)
         self.ax2.axhline(y=0.0, color='grey', linestyle='dashed', alpha=0.5)
         #ax2.set(xlabel="Wavenumber (cm-1)", ylabel="Relative intensity")
@@ -92,12 +98,30 @@ class MyWindow(QtWidgets.QMainWindow):
         self.fileh = tb.open_file('test.h5', 'r')             
 
         self.plot_data = self.get_plot_data()
-        self.matched_lines = self.create_matched_lines()
+        self.matched_lines = pd.DataFrame(self.fileh.root.matched_lines.lines.read())
         
+        self.linesTabWidget.setStyleSheet("QTabWidget::pane { border: 0; }")
+        self.linesTableView.setSortingEnabled(True)
+        self.linesTableView.setAlternatingRowColors(True)
+        self.linesTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)  # so a full row is selected when any cell is clicked
+        self.linesTableView.horizontalHeader().setStretchLastSection(True)
+        stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
+        self.linesTableView.horizontalHeader().setStyleSheet(stylesheet)
+      
         self.draw_line_plots()
         self.display_levels_table()
         self.display_files_tree()
-        self.display_lines_table('x')
+        self.display_all_lines_table()
+        
+    def onLevelSelected(self, selected, deselected):
+        # print('selected: ', selected.indexes()[0].row())  # gives the index of the dataframe that was selected
+        # print('selected: ', selected.indexes()[0].data())  # gives the index of the dataframe that was selected
+        level = selected.indexes()[0].data()
+        query_string = f"upper_desig == b'{level}'"  # b needed as the srings are stored as bytes in teh datafram and hdf5
+        self.level_lines = self.matched_lines.query(query_string)
+        
+        self.display_lines_table() 
+        
     
     def draw_line_plots(self):
         outer_layout = QtWidgets.QVBoxLayout()
@@ -140,15 +164,18 @@ class MyWindow(QtWidgets.QMainWindow):
 
         self.model = tm.levelTableModel(data)
         self.levelsTableView.setModel(self.model)
+        self.levelsTableView.selectionModel().selectionChanged.connect(self.onLevelSelected)  # needs to be after the model for the table is set
         
         # Set all of the correct flags and views
         self.levelsTableView.setSortingEnabled(True)
         self.levelsTableView.setAlternatingRowColors(True)
         self.levelsTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)  # so a full row is selected when any cell is clicked
+        self.levelsTableView.setSelectionMode(QtWidgets.QTableView.SingleSelection)  # so a full row is selected when any cell is clicked
         self.levelsTableView.horizontalHeader().setStretchLastSection(True)
         stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
         self.levelsTableView.horizontalHeader().setStyleSheet(stylesheet)
         self.levelsTableView.resizeColumnsToContents()
+        self.levelsTableView.selectRow(0)
         
     def display_files_tree(self):
         """To Do: 
@@ -176,38 +203,36 @@ class MyWindow(QtWidgets.QMainWindow):
         for col in range(self.filesTreeWidget.columnCount()):  # ! link this to a signal so it auto resizes
             self.filesTreeWidget.resizeColumnToContents(col)
             
-    def display_lines_table(self, upper_level):  
+    def display_all_lines_table(self):  
         # query_string = f'(wavenumber >= {wn_low}) & (wavenumber <= {wn_high})'  # ! do this on the fly! From a matched_lines part of the hdf5file
         # data = pd.DataFrame(self.fileh.root.XXX.read_where(query_string))
 
-        #! Work around to get the table populated for now 
-
-        self.model = tm.linesTableModel(self.matched_lines)
-        self.linesTableView.setModel(self.model)
+        model = tm.linesTableModel(self.matched_lines)
+        self.allLinesTableView.setModel(model)
         
         # Set all of the correct flags and views
-        self.linesTableView.setSortingEnabled(True)
-        self.linesTableView.setAlternatingRowColors(True)
-        self.linesTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)  # so a full row is selected when any cell is clicked
-        self.linesTableView.horizontalHeader().setStretchLastSection(True)
+        self.allLinesTableView.setSortingEnabled(True)
+        self.allLinesTableView.setAlternatingRowColors(True)
+        self.allLinesTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)  # so a full row is selected when any cell is clicked
+        self.allLinesTableView.horizontalHeader().setStretchLastSection(True)
         stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
-        self.linesTableView.horizontalHeader().setStyleSheet(stylesheet)
-        self.linesTableView.resizeColumnsToContents()
+        self.allLinesTableView.horizontalHeader().setStyleSheet(stylesheet)
+        self.allLinesTableView.resizeColumnsToContents()
         
+    def display_lines_table(self): 
         
+        if self.level_lines.empty:
+            print('Empty')
+            self.linesTableView.hide()
+            
+        else:
+            model = tm.linesTableModel(self.level_lines)
+            self.linesTableView.setModel(model)
+
+            self.linesTableView.resizeColumnsToContents()   
+            self.linesTableView.horizontalHeader().setStretchLastSection(True)
+            self.linesTableView.show()
         
-    def create_matched_lines(self):    
-        """Matches calculated lines with previously observed lines. Creates a new table with the matched lines"""
-        calculated_lines = pd.DataFrame(self.fileh.root.calculations.lines.read())  # read into a numpy structured array and convert to Dataframe
-        previous_lines = pd.DataFrame(self.fileh.root.previousLines.lines.read())
-        
-        #This is how we will merge lists together - matching the calc log_gf to observed lines. ""Outer" ensures all lines are kept.
-        matched_lines = pd.merge(calculated_lines, previous_lines, how="outer", on=['upper_desig', 'lower_desig'])
-        # print('matched_lines: ', matched_lines.head())
-        return matched_lines
-        
-     
-    
     
     def left_clicked(self):
         fig = self.sender()

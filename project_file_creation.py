@@ -52,6 +52,14 @@ class LinelistTable(tb.IsDescription):
     eq_width = tb.Float64Col()
     tags = tb.StringCol(8)
     
+class MergedLinesTable(tb.IsDescription):
+    """Descriptor for the merged linelist file made from the combined observed and calculated lines."""
+    log_gf = tb.Float64Col()
+    wavenumber = tb.Float64Col()
+    lower_desig = tb.StringCol(32)
+    upper_desig = tb.StringCol(32)
+    intensity = tb.StringCol(32)
+    
 
 fileh = tb.open_file('test.h5', 'w')
 # fileh = tb.open_file('test.h5', 'r')
@@ -209,6 +217,27 @@ def create_prev_idents_table(hdf5file, file):
         row['intensity'] = line['intensity']
         row.append()
     table.flush()  
+    
+def create_matched_lines_table(hdf5file):
+    """Matches calculated lines with previously observed lines. Creates a new table with the matched lines"""
+    calculated_lines = pd.DataFrame(hdf5file.root.calculations.lines.read())  # read into a numpy structured array and convert to Dataframe
+    previous_lines = pd.DataFrame(hdf5file.root.previousLines.lines.read())
+    
+    # Merge lists together - matching the calc log_gf to observed lines. ""Outer" ensures all lines are kept.
+    matched_lines = pd.merge(calculated_lines, previous_lines, how="outer", on=['upper_desig', 'lower_desig'])
+        
+    table = hdf5file.create_table(matched_lines_group, 'lines', MergedLinesTable, 'Matched Lines')
+  
+    row = table.row
+    for i, line in matched_lines.iterrows():  # method needed to iterrate over a DataFrame
+        row['log_gf']= line['log_gf']
+        row['wavenumber'] = line['wavenumber']
+        row['lower_desig'] = line['lower_desig']
+        row['upper_desig'] = line['upper_desig']
+        row['intensity'] = line['intensity']
+        row.append()
+    table.flush() 
+
                  
 create_spectrum_table(fileh, dat_file, hdr_file)
 create_spectrum_table(fileh, dat_file_2, hdr_file_2)
@@ -216,33 +245,6 @@ create_lin_table(fileh, lin_file)
 create_lev_table(fileh, lev_file)
 create_calc_table(fileh, calc_file)
 create_prev_idents_table(fileh, prev_file)
-
-def create_matched_lines_table(hdf5file):
-    """Matches calculated lines with previously observed lines. Creates a new table with the matched lines"""
-    calculated_lines = pd.DataFrame(hdf5file.root.calculations.lines.read())  # read into a numpy structured array and convert to Dataframe
-    previous_lines = pd.DataFrame(hdf5file.root.previousLines.lines.read())
-    
-    # THIS IS HOW YOU DO QUERIES
-    # field_name = 'lower_energy'
-    # value = 25000.
-    # string = f'({field_name} < {value})'
-    # test = pd.DataFrame(hdf5file.root.previousLines.lines.read_where(string))
-    # # print(test['intensity'])
-    
-    # print(type(calculated_lines['log_gf']))
-    # print(previous_lines[previous_lines['upper_desig'] == b'a3P4p_y4D0'])
-    # print(calculated_lines.head())
-    # print(previous_lines.head())
-    
-    #This is how we will merge lists together - matching the calc log_gf to observed lines. ""Outer" ensures all lines are kept.
-    matched_lines = pd.merge(calculated_lines, previous_lines, how="outer", on=['upper_desig', 'lower_desig'])
-    
-
-    
-
-
-
-
-# create_matched_lines_table(fileh)
+create_matched_lines_table(fileh)
 
 fileh.close()
