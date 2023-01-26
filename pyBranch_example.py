@@ -104,7 +104,7 @@ class MyWindow(QtWidgets.QMainWindow):
         self.linesTableView.setSortingEnabled(True)
         self.linesTableView.setAlternatingRowColors(True)
         self.linesTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)  # so a full row is selected when any cell is clicked
-        self.linesTableView.horizontalHeader().setStretchLastSection(True)
+        # self.linesTableView.horizontalHeader().setStretchLastSection(True)
         stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
         self.linesTableView.horizontalHeader().setStyleSheet(stylesheet)
       
@@ -112,6 +112,8 @@ class MyWindow(QtWidgets.QMainWindow):
         self.display_levels_table()
         self.display_files_tree()
         self.display_all_lines_table()
+        self.linelists = self.get_linelists()
+        self.merge_linelists()
         
     def onLevelSelected(self, selected, deselected):
         # print('selected: ', selected.indexes()[0].row())  # gives the index of the dataframe that was selected
@@ -170,7 +172,7 @@ class MyWindow(QtWidgets.QMainWindow):
         self.levelsTableView.setSortingEnabled(True)
         self.levelsTableView.setAlternatingRowColors(True)
         self.levelsTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)  # so a full row is selected when any cell is clicked
-        self.levelsTableView.setSelectionMode(QtWidgets.QTableView.SingleSelection)  # so a full row is selected when any cell is clicked
+        self.levelsTableView.setSelectionMode(QtWidgets.QTableView.SingleSelection)  # so only one row is selected at a time
         self.levelsTableView.horizontalHeader().setStretchLastSection(True)
         stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
         self.levelsTableView.horizontalHeader().setStyleSheet(stylesheet)
@@ -214,25 +216,47 @@ class MyWindow(QtWidgets.QMainWindow):
         self.allLinesTableView.setSortingEnabled(True)
         self.allLinesTableView.setAlternatingRowColors(True)
         self.allLinesTableView.setSelectionBehavior(QtWidgets.QTableView.SelectRows)  # so a full row is selected when any cell is clicked
-        self.allLinesTableView.horizontalHeader().setStretchLastSection(True)
+        # self.allLinesTableView.horizontalHeader().setStretchLastSection(True)
         stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
         self.allLinesTableView.horizontalHeader().setStyleSheet(stylesheet)
         self.allLinesTableView.resizeColumnsToContents()
         
     def display_lines_table(self): 
-        
-        if self.level_lines.empty:
-            print('Empty')
+        """Displays all of the lines associated with a user selected upper level"""
+        if self.level_lines.empty:  # if there are no lines from the upper level
             self.linesTableView.hide()
             
-        else:
+        else:  # display the lines from the upper level
+            print(self.level_lines.head())
             model = tm.linesTableModel(self.level_lines)
             self.linesTableView.setModel(model)
 
             self.linesTableView.resizeColumnsToContents()   
-            self.linesTableView.horizontalHeader().setStretchLastSection(True)
+            # self.linesTableView.horizontalHeader().setStretchLastSection(True)
             self.linesTableView.show()
+    
+    def get_linelists(self): 
+        """ Returns a dictionary containing all of teh linelists associated with each spectrum (spectum name is used as the dict key)"""       
+        spectra_names = self.fileh.root.spectra._v_groups.keys()        
+               
+        linelists = {}
+        for spectrum_name in spectra_names:
+            spectrum_group = self.fileh.get_node(self.fileh.root.spectra, spectrum_name)
+            
+            try:
+                linelists[spectrum_name] = pd.DataFrame(spectrum_group.linelist.read())
+            except:  # is there is no linelist associated with a spectrum
+                print(f'{spectrum_group} has no linelist')    
         
+        return linelists    
+            
+    def merge_linelists(self):
+        
+        for linelist in self.linelists:
+            print('self.linelists: \n', self.linelists[linelist])
+            self.matched_lines = pd.merge_asof(self.matched_lines, self.linelists[linelist])
+        
+    
     
     def left_clicked(self):
         fig = self.sender()

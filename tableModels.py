@@ -77,13 +77,11 @@ class linesTableModel(QtCore.QAbstractTableModel):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 
-                header_labels = ['log(gf)',  # custom labels for columns
+                header_labels = ['Intensity',
+                                 'log(gf)',  # custom labels for columns
                                  'Lower Energy Level',
-                                 'Upper Energy Level',
-                                 'Intensity',
-                                 'Lower Level Energy (cm-1)',
-                                 'Upper Level Energy (cm-1)',
-                                 'Wavenumber (cm-1)']
+                                 'Upper Energy Level',                                 
+                                 'Obs. Wavenumber (cm-1)']
                 
                 return str(header_labels[section])
         

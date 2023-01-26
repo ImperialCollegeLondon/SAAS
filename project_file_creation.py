@@ -59,6 +59,9 @@ class MergedLinesTable(tb.IsDescription):
     lower_desig = tb.StringCol(32)
     upper_desig = tb.StringCol(32)
     intensity = tb.StringCol(32)
+    upper_energy = tb.Float64Col()
+    lower_energy = tb.Float64Col()
+    ritz_wavenumber = tb.Float64Col()
     
 
 fileh = tb.open_file('test.h5', 'w')
@@ -222,9 +225,13 @@ def create_matched_lines_table(hdf5file):
     """Matches calculated lines with previously observed lines. Creates a new table with the matched lines"""
     calculated_lines = pd.DataFrame(hdf5file.root.calculations.lines.read())  # read into a numpy structured array and convert to Dataframe
     previous_lines = pd.DataFrame(hdf5file.root.previousLines.lines.read())
-    
+    levels = pd.DataFrame(hdf5file.root.levels.levels.read())
+
     # Merge lists together - matching the calc log_gf to observed lines. ""Outer" ensures all lines are kept.
-    matched_lines = pd.merge(calculated_lines, previous_lines, how="outer", on=['upper_desig', 'lower_desig'])
+    matched_lines = pd.merge(calculated_lines, previous_lines[['intensity', 'lower_desig', 'upper_desig', 'wavenumber']], how="outer", on=['upper_desig', 'lower_desig'])
+    matched_lines = pd.merge(matched_lines, levels[['desig', 'energy']].rename(columns={'desig':'upper_desig', 'energy': 'upper_energy'}), on='upper_desig', how='left')
+    matched_lines = pd.merge(matched_lines, levels[['desig', 'energy']].rename(columns={'desig':'lower_desig', 'energy': 'lower_energy'}), on='lower_desig', how='left')
+    matched_lines['ritz_wavenumber'] = matched_lines['upper_energy'] - matched_lines['lower_energy']
         
     table = hdf5file.create_table(matched_lines_group, 'lines', MergedLinesTable, 'Matched Lines')
   
@@ -235,6 +242,9 @@ def create_matched_lines_table(hdf5file):
         row['lower_desig'] = line['lower_desig']
         row['upper_desig'] = line['upper_desig']
         row['intensity'] = line['intensity']
+        row['upper_energy'] = line['upper_energy']
+        row['lower_energy'] = line['lower_energy']
+        row['ritz_wavenumber'] = line['ritz_wavenumber']
         row.append()
     table.flush() 
 
