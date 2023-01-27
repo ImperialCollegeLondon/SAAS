@@ -114,13 +114,13 @@ class target_level:
                     self.w_maxI = i.sig           # Check indexing of this - not sure it will work.
         return()
        
-class calculations():
+# class calculations():
 
-    def __init__(self,calc_list, *args, **kwargs):
-        """ 
-        Contains calculated log(gf) values from e.g. Kurucz, Raassen & Uylings
-        """
+#     def __init__(self,calc_list, *args, **kwargs):
+#         """ 
+#         Contains calculated log(gf) values from e.g. Kurucz, Raassen & Uylings
+#         """
         
 
 
-def match_calcs(linelist, calcs):
+# def match_calcs(linelist, calcs):
