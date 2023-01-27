@@ -1,0 +1,111 @@
+/         BASIC PARAMETERS                                                      
+id      = 'NSO type 6 FTS data file                                    '        
+inftype =         6             / Info Block type                               
+spect   = 'FT700               '/ FTS instrument                                
+day     = 'Mar 24, 2016'                                                        
+user    = 'GN                  '/ Observer                                      
+creator = ' Xgremlin 4.7       '/ Creator of this file                          
+continue= '3/2015  (           '/ Creator of this file                          
+continue= 'Darwin/x86_64 )     '/ Creator of this file                          
+acqvers = 'Alice 0.109 (03/2004'/ Acquisition software                          
+/
+/         FILE PARAMETERS                                                       
+wstart  =    0.0000000000       / First wavenumber in file                      
+wstop   =    53999.948502       / Last wavenumber in file                       
+npo     =   1048576             / Number of points in file                      
+data_is = 'Real                '/ Real or Complex                               
+delw    =   0.51498413086E-01   / Dispersion (cm-1/point)                       
+resolutn=      0.100000         / Spectral resolution (cm-1)                    
+fboffs  =         0             / File byte offset                              
+bocode  =         0             / 0: little endian, 1: big endian               
+xaxis_is= 'Wavenumber          '/ Wavenumber, Wavelength, Index, Other          
+/
+/         FILE REDUCTION PARAMETERS                                             
+wavcorr =   -4.56e-7            / Scale error correction                        
+rdsclfct=       1.00000         / Read scale factor                             
+noiselev=       0.00000         / Assumed noise level                           
+/
+/         OBSERVING PARAMETERS                                                  
+ftsmode = 'Lab                 '/ Lab,Sun,Stellar,Polarization,Minimum          
+nscan   =       259             / Number of co-added scans                      
+timestr = '19:51:18.00         '/ Starting time (MST)                           
+eltim   =    434.00000000       / Elapsed time (seconds)                        
+spectype= 'Emission            '/ Emission or Absorption                        
+source  = 'Cr/Ne lamp #8 & none'/ Source                                        
+sample  = '20mA                '/ Sample                                        
+filter1 = 'none                '/ Optical filter #1                             
+filter2 = 'none                '/ Optical filter #2                             
+input_is= 'A - B               '/ A, B, A-B, (A-B)/(A+B)                        
+apin    =       2.00000         / Aperture diameter (mm)                        
+apmax   =       1.92000         / Max aperture (mm)                             
+bmsplt  = 'CaF2                '/ Beamsplitter                                  
+dtectrA = 'R106UH              '/ Detector A                                    
+gainA   = '0.000e+00           '/ Channel A HV or gain                          
+dtectrB = 'R636                '/ Detector B                                    
+gainB   = '0.000e+00           '/ Channel B HV or gain                          
+/
+/         SCAN PARAMETERS                                                       
+alias   =         1             / Alias                                         
+fdr     =    6.8363073116       / Fringe division ratio                         
+nM      =    580382             / M (fringe rate = fzeeman/nM)                  
+nK      =     84897             / K (sample freq. = fzeeman/nK)                 
+nS      =         1             / S (related to scan length)                    
+refwavno=    15798.002500       / Laser wavenumber (cm-1)                       
+fzeeman =    150000.00000       / Control laser Zeeman frequency                
+fclock  =      0.400000E+08     / Timing clock frequency (Hz)                   
+sampfreq=       78125.0         / Sampling frequency (Hz)                       
+decim   =       1.14279         / Decimation factor                             
+kernlen =        97             / DF kernel length                              
+fracbw  =      0.900000         / Filter bandwidth / alias                      
+ctrav   =       19.4181         / Carriage travel (cm)                          
+cvel    =      0.632990         / OPD velocity (cm/sec)                         
+scan_is = 'Forward             '/ Scan Direction (F,R,Both)                     
+ratsig  =       0.00000         / Total signal (A+B) (Volt)                     
+ratrms  =       0.00000         / Total RMS (A+B) (Volt)                        
+ratio_is= 'Off                 '/ Ratio - On / Off                              
+modeff  =       0.00000         / Modulation efficiency                         
+pspect  =       0.00000         / FTS tank pressure (Torr)                      
+tspect  =       0.00000         / FTS tank temperature (C)                      
+hspect  =       0.00000         / FTS tank H2O pressure (Torr)                  
+flin    =       500.000         / Input focal length (mm)                       
+flout   =       0.00000         / Output focal length (mm)                      
+/
+/         TRANSFORM PARAMETERS                                                  
+nint    =   1048576             / Number of pts in interferogram                
+inskip  =         0             / Number of pts skipped on input                
+ncenter =         0             / Point number of central fringe                
+nused   =   1079788             / Number of pts used in transform               
+ntrans  =   1048576             / Transform size (2**N)                         
+aliaslo =    0.0000000000       / Alias low wavenumber  (cm-1)                  
+aliashi =    54000.000000       / Alias high wavenumber (cm-1)                  
+freespec=    54000.000000       / Free spectral range (cm-1)                    
+outlo   =       0.00000         / Saved lower data bound                        
+outhi   =       54000.0         / Saved upper data bound                        
+bandlo  =       0.00000         / Useful lower data bound                       
+bandhi  =       54000.0         / Useful upper data bound                       
+aircorr = 'No                  '/ Air correction flag - Yes/No                  
+modeapod=         1             / Apodization function                          
+apod1   =      -1.00000         / Apodization variable #1                       
+apod2   =       0.00000         / Apodization variable #2                       
+modephzc=         0             / Phase corr. mode                              
+pvar1   =    0.0000000000       / Phase corr. variable #1                       
+archname= 'n/a                 '/ Archive file name                             
+origtype=         6             / Original Info block type                      
+/
+/         USER VARIABLES                                                        
+uvar0   =    0.0000000000       / User variable #0                              
+uvar1   =    0.0000000000       / User variable #1                              
+uvar2   =    0.0000000000       / User variable #2                              
+uvar3   =    0.0000000000       / User variable #3                              
+uvar4   =    0.0000000000       / User variable #4                              
+uvar5   =    0.0000000000       / User variable #5                              
+uvar6   =    0.0000000000       / User variable #6                              
+uvar7   =    0.0000000000       / User variable #7                              
+uvar8   =    0.0000000000       / User variable #8                              
+uvar9   =    0.0000000000       / User variable #9                              
+/
+/         USER COMMENTS FOR ARCHIVE                                             
+comment0= 'Calibration of cr042416.003 & 4 - lower resolution and              '
+comment1= 'larger aperture. Note change in alias.                              '
+comment2= '226 V for 2V out                                                    '
+END
