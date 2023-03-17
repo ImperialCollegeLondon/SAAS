@@ -94,12 +94,6 @@ class MyWindow(QtWidgets.QMainWindow):
         uic.loadUi('mainwindow2.ui', self) 
         self.main_splitter.setSizes([300, 1000])  # ! put these as percentage of window size
         self.right_splitter.setSizes([1000, 350]) # ! put these as percentage of window size
-        
-        self.fileh = tb.open_file('test.h5', 'r')             
-
-        self.plot_data = self.get_plot_data()
-        self.matched_lines = pd.DataFrame(self.fileh.root.matched_lines.lines.read())
-        
         self.linesTabWidget.setStyleSheet("QTabWidget::pane { border: 0; }")
         self.linesTableView.setSortingEnabled(True)
         self.linesTableView.setAlternatingRowColors(True)
@@ -107,8 +101,15 @@ class MyWindow(QtWidgets.QMainWindow):
         # self.linesTableView.horizontalHeader().setStretchLastSection(True)
         stylesheet = "::section{background-color:rgb(166, 217, 245); border-radius:14px; font:bold}"  # here is where you set the table header style
         self.linesTableView.horizontalHeader().setStyleSheet(stylesheet)
+        
+        self.match_tolerance = 0.05  # matching tolerance between Ritz wavenumber and observed wavenumber in linelist
+        
+        self.fileh = tb.open_file('test.h5', 'r')  # open main hdf5 file        
+
+        #self.plot_data = self.get_plot_data()
+        self.matched_lines = pd.DataFrame(self.fileh.root.matched_lines.lines.read())
       
-        self.draw_line_plots()
+        #self.draw_line_plots()
         self.display_levels_table()
         self.display_files_tree()
         self.display_all_lines_table()
@@ -116,15 +117,24 @@ class MyWindow(QtWidgets.QMainWindow):
         self.merge_linelists()
         
     def onLevelSelected(self, selected, deselected):
-        # print('selected: ', selected.indexes()[0].row())  # gives the index of the dataframe that was selected
-        # print('selected: ', selected.indexes()[0].data())  # gives the index of the dataframe that was selected
         level = selected.indexes()[0].data()
-        query_string = f"upper_desig == b'{level}'"  # b needed as the srings are stored as bytes in teh datafram and hdf5
+        query_string = f"upper_desig == b'{level}'"  # b needed as the srings are stored as bytes in the datafram and hdf5
         self.level_lines = self.matched_lines.query(query_string)
+        self.level_lines = self.level_lines.dropna(axis='columns', how='all')  # remove all columns with NaN i.e. spectra with no matching lines        
+        
+        if self.level_lines.size > 0:  # adds the log_gf column back in if it was removed in the dropna step TODO - see if there isa  better way of doing this
+            try:
+                self.level_lines.insert(loc=1, column='log_gf', value=np.nan)
+            except ValueError:
+                pass
+        
+        
+        print('self.level_lines: ', self.level_lines.columns)
+        
+        
         
         self.display_lines_table() 
         
-    
     def draw_line_plots(self):
         outer_layout = QtWidgets.QVBoxLayout()
         
@@ -158,8 +168,8 @@ class MyWindow(QtWidgets.QMainWindow):
             outer_layout.addWidget(group_box)
         
         self.inner.setLayout(outer_layout)
-        self.inner.setStyleSheet('background-color: #EFEFEF')
-        
+        self.inner.setStyleSheet('background-color: #EFEFEF')    
+    
     def display_levels_table(self):
         """Displays the data in the levels dataframe to the levels table view in the main window"""
         data = pd.DataFrame(self.fileh.root.levels.levels.read())
@@ -227,7 +237,6 @@ class MyWindow(QtWidgets.QMainWindow):
             self.linesTableView.hide()
             
         else:  # display the lines from the upper level
-            print(self.level_lines.head())
             model = tm.linesTableModel(self.level_lines)
             self.linesTableView.setModel(model)
 
@@ -236,7 +245,7 @@ class MyWindow(QtWidgets.QMainWindow):
             self.linesTableView.show()
     
     def get_linelists(self): 
-        """ Returns a dictionary containing all of teh linelists associated with each spectrum (spectum name is used as the dict key)"""       
+        """ Returns a dictionary containing all of the linelists associated with each spectrum (spectum name is used as the dict key)"""       
         spectra_names = self.fileh.root.spectra._v_groups.keys()        
                
         linelists = {}
@@ -252,11 +261,12 @@ class MyWindow(QtWidgets.QMainWindow):
             
     def merge_linelists(self):
         
+        self.matched_lines = self.matched_lines[self.matched_lines['ritz_wavenumber'].notna()]  # drop all rows without a ritz wavenumber i.e. that don;t have a matching enrgy level
+        self.matched_lines = self.matched_lines.sort_values('ritz_wavenumber')
+
         for linelist in self.linelists:
-            print('self.linelists: \n', self.linelists[linelist])
-            self.matched_lines = pd.merge_asof(self.matched_lines, self.linelists[linelist])
-        
-    
+            self.matched_lines = pd.merge_asof(self.matched_lines, self.linelists[linelist], left_on='ritz_wavenumber', right_on='wavenumber', suffixes=('', '_' + linelist), tolerance=self.match_tolerance, direction='nearest')
+   
     
     def left_clicked(self):
         fig = self.sender()

@@ -9,21 +9,7 @@ from os.path import *
 from struct import unpack
 import matplotlib.pyplot as plt
 
-class LineSpec(IsDescription):
-    sig = Float64Col()
-    xint = Float32Col()
-    width = Float32Col()
-    dmping = Float32Col()
-    ew = Float32Col()
-    itn = Int16Col()
-    ihold = Int16Col()
-    tags = StringCol(4)
-    epstot = Float32Col()
-    epsevn = Float32Col()
-    epsodd = Float32Col()
-    epsran = Float32Col()
-    spare = Float32Col()
-    ident = StringCol(32)
+
 
 #
 # This class currently not used - added for future.

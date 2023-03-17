@@ -4,6 +4,8 @@ import tables as tb
 import numpy as np
 import pandas as pd
 import h5py
+from struct import unpack
+
 
 class EnergyTable(tb.IsDescription):
     """Descriptor for energy level data table"""
@@ -52,6 +54,24 @@ class LinelistTable(tb.IsDescription):
     eq_width = tb.Float64Col()
     tags = tb.StringCol(8)
     
+    
+    
+class LineSpec(tb.IsDescription):
+    wavenumber = tb.Float64Col()
+    snr = tb.Float32Col()
+    width = tb.Float32Col()
+    damping = tb.Float32Col()
+    eq_width = tb.Float32Col()
+    itn = tb.Int16Col()
+    ihold = tb.Int16Col()
+    tags = tb.StringCol(4)
+    epstot = tb.Float32Col()
+    epsevn = tb.Float32Col()
+    epsodd = tb.Float32Col()
+    epsran = tb.Float32Col()
+    spare = tb.Float32Col()
+    ident = tb.StringCol(32)
+    
 class MergedLinesTable(tb.IsDescription):
     """Descriptor for the merged linelist file made from the combined observed and calculated lines."""
     log_gf = tb.Float64Col()
@@ -74,52 +94,95 @@ previous_lines_group = fileh.create_group(fileh.root, 'previousLines', 'Previous
 calculations_group = fileh.create_group(fileh.root, 'calculations', 'Calculations')
 matched_lines_group = fileh.create_group(fileh.root, 'matched_lines', 'Matched Lines')
 
-hdr_file = 'test.hdr'
-hdr_file_2 = 'test2.hdr'
-dat_file = 'test.dat'
-dat_file_2 = 'test2.dat'
-lin_file = 'test.cln'
+spectrum_files = ['CrII_data\Cr042416.005_r',
+                  'CrII_data\Cr061011.007_c',
+                  'CrII_data\Cr102700.001_r',
+                  'CrII_data\Cr102700.003_r',
+                  'CrII_data\Cr110600.001_r',
+                  'CrII_data\cr110600.003_r',
+                  'CrII_data\Cr110700.001_r',
+                  'CrII_data\Cr110700.002_r',
+                  'CrII_data\Cr120800.001_r']
+
 lev_file = 'test_lev.csv'
 calc_file = 'test_calc.csv'
 prev_file = 'test_prev.csv'
 
-def create_spectrum_table(hdf5file, dat_file, hdr_file):
-    spectrum_group = hdf5file.create_group(spectra_group, dat_file[:-4], dat_file[:-4])  # create the group for the spectra
-    table = hdf5file.create_table(spectrum_group, 'spectrum', SpectrumTable, dat_file)  # create table for .dat file
-
-    # Set attributes of the .dat table as the parameters of the .hdr file
-    with open(hdr_file, 'r') as f:
-        hdr_lines = f.readlines()
+def create_spectrum_table(hdf5file, files):
+    for file in files:
+        filename = file.split('\\')[-1]
+        dat_file = file + '.dat'
+        hdr_file = file + '.hdr'
         
-        for line in hdr_lines:
-            if '=' in line:  # is a parameter line
-                line_parts = line.split('=')
-                parameter = line_parts[0].strip()  # parameter name
-                
-                if parameter == 'continue':  # because 'continue' is a reserved Python keyword
-                    parameter = 'continue_'
-                
-                value = line_parts[1].split('/ ')[0].replace("'","").strip()  
-                
-                try:  # set any parameter values that can be floats as floats
-                    value = float(value)
-                except:  # otherwise leave as strings
-                    pass                
-                             
-                table.set_attr(parameter, value)  # set hdr parameters as attributes of the .dat table
+        spectrum_group = hdf5file.create_group(spectra_group, filename, filename)  # create the group for the spectra
+        table = hdf5file.create_table(spectrum_group, 'spectrum', SpectrumTable, filename)  # create table for .dat file
+
+        # Set attributes of the .dat table as the parameters of the .hdr file
+        with open(hdr_file, 'r') as f:
+            hdr_lines = f.readlines()
+            
+            for line in hdr_lines:
+                if '=' in line:  # is a parameter line
+                    line_parts = line.split('=')
+                    parameter = line_parts[0].strip()  # parameter name
+                    
+                    if parameter == 'continue':  # because 'continue' is a reserved Python keyword
+                        parameter = 'continue_'
+                    
+                    value = line_parts[1].split('/ ')[0].replace("'","").strip()  
+                    
+                    try:  # set any parameter values that can be floats as floats
+                        value = float(value)
+                    except:  # otherwise leave as strings
+                        pass                
+                                
+                    table.set_attr(parameter, value)  # set hdr parameters as attributes of the .dat table
     
     # Populate .dat table with data points                              
-    with open(dat_file, 'r') as f:
-        spec = np.fromfile(f, np.float32)        
-        wavenum = table.attrs.wstart  # starting wavenumber
-       
-        data_point = table.row  # gives pointer for starting row in table
-        for line in spec:
-            data_point['wavenumber'] = wavenum
-            data_point['snr'] = line
-            wavenum += table.attrs.delw  # increment wavenumber by dispersion
-            data_point.append()  # write from I/O buffer to hdf5 file
-        table.flush()
+        with open(dat_file, 'r') as f:
+            spec = np.fromfile(f, np.float32)        
+            wavenum = table.attrs.wstart  # starting wavenumber
+        
+            data_point = table.row  # gives pointer for starting row in table
+            for line in spec:
+                data_point['wavenumber'] = wavenum
+                data_point['snr'] = line
+                wavenum += table.attrs.delw  # increment wavenumber by dispersion
+                data_point.append()  # write from I/O buffer to hdf5 file
+            table.flush()
+
+
+def create_lin_bin_table(hdf5file, files, group=None):
+    
+    ### TODO: Need to make this automatically select between the correct file type and do the correct conversion. i.e. merge with create_lin_table. ###
+    
+    for file in files:
+        filename = file.split('\\')[-1]
+        flin = open(file + ".lin", "rb")
+        #tags=[4]                   # Create the array for the 'tags' parameters.
+
+        nlin=unpack("i",flin.read(4))[0]          # No. of lines in the file
+        linlen = unpack("i",flin.read(4))[0]      # Total number of valid data in file
+
+        # Next line is to make up total of 320 bytes that is the prefix in the file
+        tmp = flin.read(312)
+
+        #
+        # Now read in all the lines and add to the pytable
+        #
+        spectrum_group = hdf5file.get_node(spectra_group, filename) 
+        table = hdf5file.create_table(spectrum_group, 'linelist', LineSpec, filename)  # create table for .dat file   
+        
+        row = table.row
+        for i in range(nlin) :
+            row['wavenumber'], row['snr'], row['width'], row['damping'], row['itn'], row['ihold'] = unpack("dfffhh", flin.read(24))
+            row['tags'] = flin.read(4)
+            row['epstot'], row['epsevn'], row['epsodd'], row['epsran'], row['spare'] = unpack("fffff", flin.read(20))
+            row['ident'] = flin.read(32)
+            row.append()
+        table.flush()          
+        flin.close()
+
 
 def create_lin_table(hdf5file, file, group=None):
 
@@ -249,9 +312,8 @@ def create_matched_lines_table(hdf5file):
     table.flush() 
 
                  
-create_spectrum_table(fileh, dat_file, hdr_file)
-create_spectrum_table(fileh, dat_file_2, hdr_file_2)
-create_lin_table(fileh, lin_file)
+create_spectrum_table(fileh, spectrum_files)
+create_lin_bin_table(fileh, spectrum_files)
 create_lev_table(fileh, lev_file)
 create_calc_table(fileh, calc_file)
 create_prev_idents_table(fileh, prev_file)
