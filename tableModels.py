@@ -1,5 +1,7 @@
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QBrush
+import numpy as np
 
 
 class levelTableModel(QtCore.QAbstractTableModel):
@@ -55,17 +57,25 @@ class linesTableModel(QtCore.QAbstractTableModel):
     def __init__(self, data):
         super(linesTableModel, self).__init__()
         self._data = data
+        self.data_column = 8  # the column index of the first column to contain matched line (from linelist) data.
 
     def data(self, index, role):
-        """The data to be displayed. This is the lines dataframe"""
-        if role == Qt.DisplayRole:
-            value = self._data.iloc[index.row(), index.column()]
-            
+        """The data to be displayed. This is the lines dataframe"""   
+             
+        if role == Qt.DisplayRole:      
+            value = self._data.iloc[index.row(), index.column()] 
             if isinstance(value, bytes):  # changes from byte string to utf-8 for display only ! could cast whole pandas column to utf-8 if needed
-                value = value.decode('utf-8')
-                        
+                value = value.decode('utf-8')                        
             return str(value)
-
+        
+        if role == Qt.ForegroundRole:
+            try:
+                if self._data.iloc[index.row(), self.data_column:].isnull().values.all():  # colours all text grey if no matched lines
+                    return QBrush(Qt.gray)
+            except IndexError:
+                return QBrush(Qt.black)
+        
+        
     def rowCount(self, index):
         return self._data.shape[0]
 
@@ -91,10 +101,11 @@ class linesTableModel(QtCore.QAbstractTableModel):
                     return str(header_labels[section])
                 
                 else:
-                    return 'Test Header'
+                    lower_header, upper_header = self._data.columns[section].split('__')
+                    return f'{upper_header}\n{lower_header}'                   
         
-            # if orientation == Qt.Vertical:  # row labels
-            #     return str('')
+            if orientation == Qt.Vertical:  # row labels
+                return str('')
             
     def sort(self, Ncol, order):
         """Sort table by given column number."""

@@ -6,7 +6,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from bisect import bisect_left, bisect_right
 from lmfit.models import VoigtModel
 import sys
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic, QtGui
 from PyQt5.QtCore import Qt
 import branchClasses as bc
 import tableModels as tm
@@ -122,53 +122,86 @@ class MyWindow(QtWidgets.QMainWindow):
         self.level_lines = self.matched_lines.query(query_string)
         self.level_lines = self.level_lines.dropna(axis='columns', how='all')  # remove all columns with NaN i.e. spectra with no matching lines        
         
-        if self.level_lines.size > 0:  # adds the log_gf column back in if it was removed in the dropna step TODO - see if there isa  better way of doing this
+        if self.level_lines.size > 0:  # adds the log_gf column back in if it was removed in the dropna step TODO - see if there is a better way of doing this
             try:
                 self.level_lines.insert(loc=1, column='log_gf', value=np.nan)
             except ValueError:
-                pass
-        
-        
-        print('self.level_lines: ', self.level_lines.columns)
-        
-        
+                pass       
         
         self.display_lines_table() 
+        self.draw_line_plots()
         
     def draw_line_plots(self):
-        outer_layout = QtWidgets.QVBoxLayout()
         
-        plot_positions = [[True, True, True, False, False], 
-                          [True, True, False, True, False], 
-                          [True, False, True, True, True],
-                          [False, False, True, False, True]]  # dummy list to create grid of plots
-                
-        for i, row in enumerate(plot_positions):
-            inner_layout = QtWidgets.QHBoxLayout()
-            group_box = QtWidgets.QGroupBox(f'Spectrum {i}.asc')
+        if self.inner.layout() is not None:  # won't happen on initialisation
+            QtWidgets.QWidget().setLayout(self.inner.layout())  # removes the layout attached to self.inner by changing the layouts parent to a temporary widget TODO check this doesn't slow the system down by having loads of layouts in the memory - there is a cleaner in PyQt that might be useful here
+    
+        plot_layout = QtWidgets.QVBoxLayout()
+        
+        # TODO may need to convert the df to a list/array to be able to get single rows? or do this on pandas only?
+        
+        for line in self.level_lines:
+            line_layout = QtWidgets.QHBoxLayout()
+            group_box = QtWidgets.QGroupBox(f'{self.level_lines[line]}')
+            print('self.level_lines[line]: ', line)
             group_box.setStyleSheet('background-color: #EFEFEF')
-                        
-            for plot in row:               
-                # fig = LinePlot(xx, yy)
-                fig = LinePlot(self.plot_data)
-                fig.setFixedSize(250,350)
-                fig.right_clicked.connect(self.right_clicked)  # now linked to the event handler of the object itself (the QtCore.pyqtSignal() 'right_clicked'). This then calls the function self.right_clicked 
-                fig.left_clicked.connect(self.left_clicked)
-                
-                if plot:  # create the line plot
-                    inner_layout.addWidget(fig)
-                else:  # add a dummy blank space
-                    placeholder = QtWidgets.QWidget()
-                    placeholder.setFixedHeight(350)
-                    placeholder.setFixedWidth(250)
-                    inner_layout.addWidget(placeholder)
-
-            inner_layout.setAlignment(Qt.AlignLeft)            
-            group_box.setLayout(inner_layout)    
-            outer_layout.addWidget(group_box)
+            
+            placeholder = QtWidgets.QWidget()
+            placeholder.setFixedHeight(350)
+            placeholder.setFixedWidth(250)
+            line_layout.addWidget(placeholder)
+    
+            line_layout.setAlignment(Qt.AlignLeft)            
+            group_box.setLayout(line_layout)    
+            plot_layout.addWidget(group_box)
+            
+        self.inner.setLayout(plot_layout)
+        self.inner.setStyleSheet('background-color: #EFEFEF')  
         
-        self.inner.setLayout(outer_layout)
-        self.inner.setStyleSheet('background-color: #EFEFEF')    
+        # plot_positions = [[True, True, True, False, False], 
+        #                   [True, True, False, True, False], 
+        #                   [True, False, True, True, True],
+        #                   [False, False, True, False, True]]  # dummy list to create grid of plots
+                
+        # for i, row in enumerate(plot_positions):
+        #     inner_layout = QtWidgets.QHBoxLayout()
+        #     group_box = QtWidgets.QGroupBox(f'Spectrum {i}.asc')
+        #     group_box.setStyleSheet('background-color: #EFEFEF')
+                        
+        #     for plot in row:               
+        #         # fig = LinePlot(xx, yy)
+        #         fig = LinePlot(self.plot_data)
+        #         fig.setFixedSize(250,350)
+        #         fig.right_clicked.connect(self.right_clicked)  # now linked to the event handler of the object itself (the QtCore.pyqtSignal() 'right_clicked'). This then calls the function self.right_clicked 
+        #         fig.left_clicked.connect(self.left_clicked)
+                
+        #         if plot:  # create the line plot
+        #             inner_layout.addWidget(fig)
+        #         else:  # add a dummy blank space
+        #             placeholder = QtWidgets.QWidget()
+        #             placeholder.setFixedHeight(350)
+        #             placeholder.setFixedWidth(250)
+        #             inner_layout.addWidget(placeholder)
+
+        #     inner_layout.setAlignment(Qt.AlignLeft)            
+        #     group_box.setLayout(inner_layout)    
+        #     outer_layout.addWidget(group_box)
+        
+  
+        
+    def get_spectrum_data(self, spectrum, wn_low, wn_high):
+        """Return the section of the specified spectrum between the upper and lower wavenumbers"""
+        query_string = f'(wavenumber >= {wn_low}) & (wavenumber <= {wn_high})'  # remember the brackets around each query
+        data = pd.DataFrame(spectrum.read_where(query_string))
+        return data
+        
+    def get_plot_data(self):
+        wn_low = 19827.8
+        wn_high = 19828.3
+        
+        spec = self.fileh.root.spectra.test.spectrum        
+        data = self.get_spectrum_data(spec, wn_low, wn_high)
+        return data  
     
     def display_levels_table(self):
         """Displays the data in the levels dataframe to the levels table view in the main window"""
@@ -265,8 +298,8 @@ class MyWindow(QtWidgets.QMainWindow):
         self.matched_lines = self.matched_lines.sort_values('ritz_wavenumber')
 
         for linelist in self.linelists:
-            self.matched_lines = pd.merge_asof(self.matched_lines, self.linelists[linelist], left_on='ritz_wavenumber', right_on='wavenumber', suffixes=('', '_' + linelist), tolerance=self.match_tolerance, direction='nearest')
-   
+            self.linelists[linelist] = self.linelists[linelist].add_suffix(f'__{linelist}')
+            self.matched_lines = pd.merge_asof(self.matched_lines, self.linelists[linelist], left_on='ritz_wavenumber', right_on=f'wavenumber__{linelist}', tolerance=self.match_tolerance, direction='nearest')
     
     def left_clicked(self):
         fig = self.sender()
@@ -274,22 +307,7 @@ class MyWindow(QtWidgets.QMainWindow):
         
     def right_clicked(self):
         print(self.main_splitter.sizes())
-        print('right click')  
-        
-    def get_spectrum_data(self, spectrum, wn_low, wn_high):
-        """Return the section of the specified spectrum between the upper and lower wavenumbers"""
-        query_string = f'(wavenumber >= {wn_low}) & (wavenumber <= {wn_high})'  # remember the brackets around each query
-        data = pd.DataFrame(spectrum.read_where(query_string))
-        return data
-        
-    def get_plot_data(self):
-        wn_low = 19827.8
-        wn_high = 19828.3
-        
-        spec = self.fileh.root.spectra.test.spectrum        
-        data = self.get_spectrum_data(spec, wn_low, wn_high)
-        return data        
-       
+        print('right click')    
        
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
