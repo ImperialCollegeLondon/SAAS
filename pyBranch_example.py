@@ -26,8 +26,8 @@ class LinePlot(FigureCanvasQTAgg):
     right_clicked = QtCore.pyqtSignal()  # this is our custom signal that we will emit for the event manager to collect
     left_clicked = QtCore.pyqtSignal()
     
-    def __init__(self, plot_data, *args, **kwargs):
-        fig = self._create_fig(plot_data) 
+    def __init__(self, plot_data, spectrum_name, *args, **kwargs):
+        fig = self._create_fig(plot_data, spectrum_name) 
         super().__init__(figure=fig, *args, **kwargs)    
         self.selected = False   
         fig.set_facecolor('#EFEFEF')
@@ -69,20 +69,22 @@ class LinePlot(FigureCanvasQTAgg):
         return super().mousePressEvent(event)  # not needed but good practice to send the event up the chain
         
     
-    def _create_fig(self, plot_data):  
+    def _create_fig(self, plot_data, spectrum_name):  
         x = plot_data['wavenumber']
         y = plot_data['snr']
 
-        result = self._create_voigt(x, y)
+        # result = self._create_voigt(x, y)
         
         # Upper plot        
         self.fig, (self.ax1, self.ax2) = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=(2.5, 3.5))
+        self.ax1.set_title(spectrum_name)
         self.ax1.plot(x, y)
         #ax1.set(ylabel="Relative intensity")
         self.ax1.ticklabel_format(useOffset=False)
 
         # Residual plot
-        self.ax2.plot(x, y - result.best_fit)
+        # self.ax2.plot(x, y - result.best_fit)
+        self.ax2.plot(x, y)
         self.ax2.axhline(y=0.0, color='grey', linestyle='dashed', alpha=0.5)
         #ax2.set(xlabel="Wavenumber (cm-1)", ylabel="Relative intensity")
         return self.fig
@@ -103,10 +105,11 @@ class MyWindow(QtWidgets.QMainWindow):
         self.linesTableView.horizontalHeader().setStyleSheet(stylesheet)
         
         self.match_tolerance = 0.05  # matching tolerance between Ritz wavenumber and observed wavenumber in linelist
+        self.plot_width_factor = 10.  # width of spectrum plots in cm-1 TODO potentialy make this a percentage of line width?
+        
         
         self.fileh = tb.open_file('test.h5', 'r')  # open main hdf5 file        
 
-        #self.plot_data = self.get_plot_data()
         self.matched_lines = pd.DataFrame(self.fileh.root.matched_lines.lines.read())
       
         #self.draw_line_plots()
@@ -132,31 +135,43 @@ class MyWindow(QtWidgets.QMainWindow):
         self.draw_line_plots()
         
     def draw_line_plots(self):
-        
+              
         if self.inner.layout() is not None:  # won't happen on initialisation
             QtWidgets.QWidget().setLayout(self.inner.layout())  # removes the layout attached to self.inner by changing the layouts parent to a temporary widget TODO check this doesn't slow the system down by having loads of layouts in the memory - there is a cleaner in PyQt that might be useful here
+
+        linelist_width = 8  # width of dataframe without any matched lines from spectra linelists
     
-        plot_layout = QtWidgets.QVBoxLayout()
+        if self.level_lines.columns.size > linelist_width:  # level has associated matched lines from linelists
+            matched_spectra = self.get_list_of_spectra(self.level_lines)            
+            plot_layout = QtWidgets.QVBoxLayout()           
+
+
+            # TODO get blank placeholders put in places where the line doesn't appear in a spectrum - should be ok as spectra will be in the order tehy appear in the list
+
+
+            for index, row in self.level_lines.iterrows():  
+                ritz_wavenumber = row["ritz_wavenumber"]           
+                line_layout = QtWidgets.QHBoxLayout()
+                group_box = QtWidgets.QGroupBox(f'{ritz_wavenumber} cm-1')
+                group_box.setStyleSheet('background-color: #EFEFEF')      
+                
+                for spectrum in matched_spectra:  
+                    if not np.isnan(row[f'wavenumber__{spectrum}']):   
+                        line_width = row[f'width__{spectrum}'] / 1000   # fwhm of line in cm-1    
+                        plot_data = self.get_plot_data(spectrum, ritz_wavenumber, line_width)
+                        
+                        fig = LinePlot(plot_data, spectrum)
+                        fig.setFixedSize(250,350)
+                        fig.right_clicked.connect(self.right_clicked)  # now linked to the event handler of the object itself (the QtCore.pyqtSignal() 'right_clicked'). This then calls the function self.right_clicked 
+                        fig.left_clicked.connect(self.left_clicked)
+                        line_layout.addWidget(fig)
         
-        # TODO may need to convert the df to a list/array to be able to get single rows? or do this on pandas only?
-        
-        for line in self.level_lines:
-            line_layout = QtWidgets.QHBoxLayout()
-            group_box = QtWidgets.QGroupBox(f'{self.level_lines[line]}')
-            print('self.level_lines[line]: ', line)
-            group_box.setStyleSheet('background-color: #EFEFEF')
-            
-            placeholder = QtWidgets.QWidget()
-            placeholder.setFixedHeight(350)
-            placeholder.setFixedWidth(250)
-            line_layout.addWidget(placeholder)
-    
-            line_layout.setAlignment(Qt.AlignLeft)            
-            group_box.setLayout(line_layout)    
-            plot_layout.addWidget(group_box)
-            
-        self.inner.setLayout(plot_layout)
-        self.inner.setStyleSheet('background-color: #EFEFEF')  
+                line_layout.setAlignment(Qt.AlignLeft)            
+                group_box.setLayout(line_layout)    
+                plot_layout.addWidget(group_box)
+                
+            self.inner.setLayout(plot_layout)
+            self.inner.setStyleSheet('background-color: #EFEFEF')  
         
         # plot_positions = [[True, True, True, False, False], 
         #                   [True, True, False, True, False], 
@@ -186,8 +201,11 @@ class MyWindow(QtWidgets.QMainWindow):
         #     inner_layout.setAlignment(Qt.AlignLeft)            
         #     group_box.setLayout(inner_layout)    
         #     outer_layout.addWidget(group_box)
-        
-  
+      
+      
+    def get_list_of_spectra(self, df):
+        """return a list of all of the spectra that the level has matched lines within"""    
+        return [x.split('__')[-1] for x in df.columns.tolist() if 'itn' in x]
         
     def get_spectrum_data(self, spectrum, wn_low, wn_high):
         """Return the section of the specified spectrum between the upper and lower wavenumbers"""
@@ -195,13 +213,13 @@ class MyWindow(QtWidgets.QMainWindow):
         data = pd.DataFrame(spectrum.read_where(query_string))
         return data
         
-    def get_plot_data(self):
-        wn_low = 19827.8
-        wn_high = 19828.3
+    def get_plot_data(self, spectrum, wavenumber, line_width):
+        plot_width = line_width * self.plot_width_factor
+        spec_table = self.fileh.get_node(f'/spectra/{spectrum}', 'spectrum')           
+        data = self.get_spectrum_data(spec_table, wavenumber - plot_width, wavenumber + plot_width)
         
-        spec = self.fileh.root.spectra.test.spectrum        
-        data = self.get_spectrum_data(spec, wn_low, wn_high)
         return data  
+        # return pd.DataFrame(np.random.randn(1000, 2), columns=["wavenumber", "snr"])  # Dummy data
     
     def display_levels_table(self):
         """Displays the data in the levels dataframe to the levels table view in the main window"""
@@ -223,7 +241,7 @@ class MyWindow(QtWidgets.QMainWindow):
         self.levelsTableView.selectRow(0)
         
     def display_files_tree(self):
-        """To Do: 
+        """TODO: 
             add in all other fields. 
             Make a tick box for if the file has been intensity corrected.
             right click for context menu
@@ -294,13 +312,14 @@ class MyWindow(QtWidgets.QMainWindow):
             
     def merge_linelists(self):
         
-        self.matched_lines = self.matched_lines[self.matched_lines['ritz_wavenumber'].notna()]  # drop all rows without a ritz wavenumber i.e. that don;t have a matching enrgy level
+        self.matched_lines = self.matched_lines[self.matched_lines['ritz_wavenumber'].notna()]  # drop all rows without a ritz wavenumber i.e. that don't have a matching energy level
         self.matched_lines = self.matched_lines.sort_values('ritz_wavenumber')
+        #self.matched_lines['matched_spectra'] = np.empty((len(self.matched_lines.index), 0)).tolist()  # create column of empty lists
 
         for linelist in self.linelists:
             self.linelists[linelist] = self.linelists[linelist].add_suffix(f'__{linelist}')
-            self.matched_lines = pd.merge_asof(self.matched_lines, self.linelists[linelist], left_on='ritz_wavenumber', right_on=f'wavenumber__{linelist}', tolerance=self.match_tolerance, direction='nearest')
-    
+            self.matched_lines = pd.merge_asof(self.matched_lines, self.linelists[linelist], left_on='ritz_wavenumber', right_on=f'wavenumber__{linelist}', tolerance=self.match_tolerance, direction='nearest')              
+
     def left_clicked(self):
         fig = self.sender()
         print("Plot selected:" + str(not fig.get_selected()))

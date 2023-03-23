@@ -87,8 +87,8 @@ class linesTableModel(QtCore.QAbstractTableModel):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 
-                if section <= 7:  # the first 8 columns
-                
+                if section < self.data_column:  # the first 8 columns
+               
                     header_labels = ['Intensity',
                                     'log(gf)',  # custom labels for columns
                                     'Lower Level',
