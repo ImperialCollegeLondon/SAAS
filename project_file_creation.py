@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import h5py
 from struct import unpack
+import os
 
 
 class EnergyTable(tb.IsDescription):
@@ -94,15 +95,15 @@ previous_lines_group = fileh.create_group(fileh.root, 'previousLines', 'Previous
 calculations_group = fileh.create_group(fileh.root, 'calculations', 'Calculations')
 matched_lines_group = fileh.create_group(fileh.root, 'matched_lines', 'Matched Lines')
 
-spectrum_files = ['CrII_data\Cr042416.005_r',
-                  'CrII_data\Cr061011.007_c',
-                  'CrII_data\Cr102700.001_r',
-                  'CrII_data\Cr102700.003_r',
-                  'CrII_data\Cr110600.001_r',
-                  'CrII_data\cr110600.003_r',
-                  'CrII_data\Cr110700.001_r',
-                  'CrII_data\Cr110700.002_r',
-                  'CrII_data\Cr120800.001_r']
+spectrum_files = [os.path.join('CrII_data', 'Cr042416.005_r'),
+                  os.path.join('CrII_data', 'Cr061011.007_c'),
+                  os.path.join('CrII_data', 'Cr102700.001_r'),
+                  os.path.join('CrII_data', 'Cr102700.003_r'),
+                  os.path.join('CrII_data', 'Cr110600.001_r'),
+                  os.path.join('CrII_data', 'cr110600.003_r'),
+                  os.path.join('CrII_data', 'Cr110700.001_r'),
+                  os.path.join('CrII_data', 'Cr110700.002_r'),
+                  os.path.join('CrII_data', 'Cr120800.001_r')]
 
 lev_file = 'test_lev.csv'
 calc_file = 'test_calc.csv'
