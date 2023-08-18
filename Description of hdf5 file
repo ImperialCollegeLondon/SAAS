@@ -1,0 +1,88 @@
+Importing original data files into hdf5 file - requirements
+-----------------------------------------------------------
+
+Group: Calculations
+   
+   Dataset: Calculated transition probabilities. File shall be a table with columns containing the
+   wavenumber, lower level key, upper level key, and transition probability. They keys must match
+   the keys in the levels and previous identifications groups. Additional columns may be added as
+   desired (e.g. alternate level descriptions), but will not be used by the program
+   
+   Dataset: Additional calculations as needed with the same criteria.
+
+Group: Levels
+  
+   Dataset: List of energy levels. File shall be a table with columns containing the energy level
+   value, the level key, the J-value, the parity, and the lifetime. Lifetimes may be blank, as
+   needed in the case of lower levels that may be metastable, but results will not be calculated for
+   any upper energy level with a blank lifetime. The key must match the key in the calculations and
+   previous identifications groups. Additional columns may be added as desired (e.g. alternate level 
+   descriptions, eigenvector components, HFS parameters), but will not be used by the program.
+   
+   Dataset: Additional lists of energy levels as needed, with the same criteria. These may be for
+   other ions present in the spectrum. 
+
+
+Group: Standard lamp calibrations
+   
+   Dataset: Certificates for the standard lamp calibrations. Columns should be wavelength in nm and
+   spectral radiance in µW/(mm^2 sr nm), or spectral radiant intensity in µW/(sr nm). These units
+   can be rescaled by a common factor (e.g. to use W rather than µW), provided that the factor is
+   applied uniformly.                                                   
+
+
+Group: Previous identifications
+
+  Dataset: Primary list of previous identifications. File shall be a table with columns containing
+  the wavenumber, lower level key, upper level key, and intensity. The key must match the key in the
+  levels group and that used in the calculations group. The decision of the appropriate level keys
+  should be made early on by the user. Additional columns can be added as desired but will not be
+  used by the program.
+  
+  Dataset: Additional lists of previous identifications as needed, with the same criteria.
+
+Group: Spectra
+  Group: Spectrum 1 
+    Dataset: Individual spectrum taken from xgremlin .dat file. Metadata taken from .hdr file
+    Group: Spectra of calibration lamp
+      Group: Original spectra:
+        Dataset spectrum 1: First spectrum of calibration lamp taken from .dat file. Metadata from
+        .hdr file
+        Dataset spectrum 2: Second spectrum of calibration lamp taken from .dat file. Metadata from
+        .hdr file
+        Dataset ....
+      Group: Filtered spectra:
+        Dataset filtered spectrum 1: Filtered spectrum 1 (done in Xgremlin initially)
+        Dataset filtered spectrum 2: Filtered spectrum 2 (done in Xgremlin initially)
+        Dataset filtered spectrum ...
+      Dataset Average of filtered spectra
+      Group: Interpolated standard lamp calibration in phot per cm-1
+        Dataset: interpolated and rescaled version of calibration lamp
+        Dataset: interpolated and rescaled version of other calibration lamps
+    
+    Group: Response curves:
+      Dataset: Initial version of response curve. Metadata refer to dataset used to generate them
+      Dataset: Subsequent versions of response curves. Metadata refer to dataset used to generate
+      them.
+      ---
+      
+    Group: Raw linelists (.lin files):
+      Dataset: Initial version of linelist
+      Dataset: Subsequent versions of linelists with metadata describing changes? Or logfile? 
+               Best way to do this still undertermined - ask Jacob. 
+      Dataset: Current working version of linelist
+      
+    Group: Intensity calibrated linelists:
+      Dataset: Initial version of intensity calibrated linelists. Metadat describe datasets used to
+      generate them.
+      Dataset: Subsequent versions of linelists? With changes? or logfile?
+      Dataset: Current working version of intensity calibrated linelists.
+      
+    Group: List of identified lines:
+      Dataset: Intial version with metadata describing datasets used to generate list
+      Dataset: Subsequent versions of linelists with metadata describing changes?
+      Dataset: Current working version of linelist.
+      
+      
+    
+      

@@ -15,7 +15,7 @@ import tables as tb
 import ctypes
 
 ### Global settings ###
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID()  # lets windows know we are setting our own icon for the taskbar
+#ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID()  # lets windows know we are setting our own icon for the taskbar
 matplotlib.use('QT5Agg')
 #######################
 
