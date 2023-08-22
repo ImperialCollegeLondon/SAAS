@@ -1,3 +1,29 @@
+"""
+Dataframes:
+
+ 1) calibration_certificate:
+      Wavelength
+      Original radiance columns (maybe multiple columns as from original certificate)
+      Radiance in photons/cm-1
+ 
+ 2) standard_lamp_spectra:
+      Wavenumber
+
+      Interpolated calibration certificate
+
+      Intensity from before spectrum
+      Intensity from after spectrum
+      Other spectra ...
+
+      Filtered version of before spectrum
+      Filtered version of after spectrum
+      Filtered version of other spectra ...
+
+      Average filtered spectrum
+      Response curve 
+
+"""
+
 from scipy.interpolate import interp 
 import matplotlib.pyplot as plt
 
@@ -6,12 +32,14 @@ from WavenumberConversions import airtovac
 def InterpolateCalibration(calibration_certificate, wstart, wstop, delw):
     
     """ 
-       Calibration certificate is a tuple of wavelength(nm), intensity(W per cm^-2.sr.nm)
+       Calibration certificate is a dataframe with wavelength(nm), intensity(W per cm^-2.sr.nm).
+       This should be converted to photons per wavenumber and saved in additional column.
        wstart should be first wavenumber in the measured spectrum and wstop the last
        delw is the desired interpolation in wavenumbers. Should be the same as the measured spectrum
     """
+    if calibration_certificate has no column for photons per wavenumber:
 
-    converted_certificate = ConvertToPhotonsPerWavenumber(calibration_certificate)
+      calibration_certificate['PhotonsPerWavenumber'] = ConvertToPhotonsPerWavenumber(calibration_certificate)
 
     """
        Cubic spline interpolation should be used. First define the grid for the interpolation
@@ -23,9 +51,9 @@ def InterpolateCalibration(calibration_certificate, wstart, wstop, delw):
     Check that number of points is correct. 
     """
 
-    interpolated_calibration = interp(converted_certificate, xi, method='cubic')
+    standard_lamp_spectra['interpolated_certificate'] = interp(calibration_certificate, xi, method='cubic')
 
-    PlotInterpolatedCalibration(converted_certificate,(xi,interpolated_calibration))
+    PlotInterpolatedCalibration(calibration_certificate['PhotonsPerWavenumber'],(xi,interpolated_calibration))
 
     if(plot not OK ):
        # Need to change some parameters if it doesn't look right
@@ -39,7 +67,7 @@ def InterpolateCalibration(calibration_certificate, wstart, wstop, delw):
 
     WriteToHDF(location,interpolated_calibration)   # Save the result somewhere in the HDF5 file
 
-    return((xi,interpolated_calibration))     # Return a tuple of the interpolated calibration
+    return((xi,interpolated_calibration))     # Return interpolated calibration in additional column
     
 
 def ConvertToPhotonsPerWavenumber(calibration_certificate):
